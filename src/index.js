@@ -20,7 +20,7 @@ const BOT_ASSISTANT_NAME = process.env.BOT_ASSISTANT_NAME || 'Арина';
 const SALES_MANAGER_NAME = process.env.SALES_MANAGER_NAME || 'Екатерина';
 const FIRST_ORDER_DISCOUNT = Number(process.env.FIRST_ORDER_DISCOUNT || 5);
 const WEBSITE_BASE_URL = 'https://comint.onrender.com';
-const DEFAULT_PRICE_NOTE = 'На сайте Comint числовые цены не опубликованы. Стоимость рассчитывается индивидуально после уточнения тиража, размеров, материала, макета и сроков.';
+const DEFAULT_PRICE_NOTE = 'Тестовая цена в боте указана для проверки сценария. Итоговая стоимость рассчитывается менеджером после уточнения тиража, размеров, материала, макета и сроков.';
 
 const CANCEL_TEXTS = ['отмена', 'отменить', 'отменить заявку', '❌ отменить заявку', '/cancel'];
 const BACK_TEXTS = ['назад', '⬅️ назад', '← назад'];
@@ -688,11 +688,11 @@ async function sendPrices(chatId) {
   await sendMessage(
     chatId,
     [
-      `Проверил сайт ${WEBSITE_BASE_URL}: числовой прайс там не опубликован.`,
+      `Для тестирования в боте включены примерные цены в BYN.`,
       '',
-      'Для услуг Comint стоимость зависит от тиража, размера, материала, макета, обработки и сроков. Поэтому бот не показывает неподтверждённые цифры, а собирает параметры для индивидуального расчёта менеджером.',
+      'Это не реальный прайс сайта Comint, а тестовые значения, чтобы проверить сценарии расчёта и передачу стоимости менеджеру.',
       '',
-      'Напишите, что нужно изготовить, или выберите услугу в каталоге — я задам короткие вопросы и передам заявку на расчёт.'
+      'Выберите услугу в каталоге или напишите задачу своими словами — я покажу предварительную тестовую стоимость.'
     ].join('\n'),
     mainKeyboard()
   );
@@ -1378,69 +1378,83 @@ function formatLeadForManager(lead) {
 }
 
 async function calculateLead(lead, service) {
-  if (!service?.calc || service.calc.type === 'manager') {
+  if (!service) {
     return null;
   }
 
   const prices = await readJson('prices.json', { currency: 'BYN', prices: {} });
   const currency = prices.currency || 'BYN';
 
-  if (service.calc.type === 'area_m2') {
+  if (service.calc?.type === 'area_m2') {
     const priceRule = prices.prices?.[service.calc.priceKey];
     const pricePerM2 = Number(priceRule?.value || 0);
     const width = Number(lead.fields?.width_m || 0);
     const height = Number(lead.fields?.height_m || 0);
 
-    if (!width || !height || !pricePerM2) {
-      return null;
+    if (width && height && pricePerM2) {
+      const area = roundMoney(width * height);
+      const amount = roundMoney(area * pricePerM2);
+
+      return {
+        type: 'area_m2',
+        priceEstimate: `${amount} ${currency}`,
+        clientText: `Площадь: ${area} м².\nПредварительная стоимость: ${amount} ${currency}.\n\nТочная цена зависит от материала, обработки, срочности и макета.`,
+        details: `${width} × ${height} м = ${area} м²; ${pricePerM2} ${currency}/м²; итого ${amount} ${currency}`
+      };
     }
-
-    const area = roundMoney(width * height);
-    const amount = roundMoney(area * pricePerM2);
-
-    return {
-      type: 'area_m2',
-      priceEstimate: `${amount} ${currency}`,
-      clientText: `Площадь: ${area} м².\nПредварительная стоимость: ${amount} ${currency}.\n\nТочная цена зависит от материала, обработки, срочности и макета.`,
-      details: `${width} × ${height} м = ${area} м²; ${pricePerM2} ${currency}/м²; итого ${amount} ${currency}`
-    };
   }
 
-  if (service.calc.type === 'tiered_quantity') {
+  if (service.calc?.type === 'tiered_quantity') {
     const priceRule = prices.prices?.[service.calc.priceKey];
     const tiers = priceRule?.tiers || {};
     const quantityRange = String(lead.fields?.quantity_range || '');
     const urgency = String(lead.fields?.urgency || '');
     const tier = tiers[quantityRange];
 
-    if (!tier) {
-      return null;
+    if (tier) {
+      const baseAmount = Number(tier.value || 0);
+      if (baseAmount) {
+        const urgentMultiplier = urgency === 'urgent' ? Number(priceRule.urgentMultiplier || 1.25) : 1;
+        const amount = roundMoney(baseAmount * urgentMultiplier);
+        const urgencyText = urgency === 'urgent' ? `Срочность: применён коэффициент ${urgentMultiplier}.` : 'Срок: обычный заказ.';
+        const discountText = lead.discountOffer ? `\nПри подтверждении заявки действует бонус: ${lead.discountOffer}.` : '';
+
+        return {
+          type: 'tiered_quantity',
+          priceEstimate: `от ${amount} ${currency}`,
+          clientText: [
+            `Предварительная стоимость: от ${amount} ${currency}.`,
+            urgencyText,
+            'Точная цена зависит от бумаги, цветности, постпечатной обработки и макета.',
+            discountText
+          ].filter(Boolean).join('\n'),
+          details: `${lead.service?.name || service.name}; тираж: ${tier.label || quantityRange}; база: ${baseAmount} ${currency}; срочность: ${urgency || 'standard'}; итого от ${amount} ${currency}`
+        };
+      }
     }
-
-    const baseAmount = Number(tier.value || 0);
-    if (!baseAmount) {
-      return null;
-    }
-
-    const urgentMultiplier = urgency === 'urgent' ? Number(priceRule.urgentMultiplier || 1.25) : 1;
-    const amount = roundMoney(baseAmount * urgentMultiplier);
-    const urgencyText = urgency === 'urgent' ? `Срочность: применён коэффициент ${urgentMultiplier}.` : 'Срок: обычный заказ.';
-    const discountText = lead.discountOffer ? `\nПри подтверждении заявки действует бонус: ${lead.discountOffer}.` : '';
-
-    return {
-      type: 'tiered_quantity',
-      priceEstimate: `от ${amount} ${currency}`,
-      clientText: [
-        `Предварительная стоимость: от ${amount} ${currency}.`,
-        urgencyText,
-        'Точная цена зависит от бумаги, цветности, постпечатной обработки и макета.',
-        discountText
-      ].filter(Boolean).join('\n'),
-      details: `${lead.service?.name || service.name}; тираж: ${tier.label || quantityRange}; база: ${baseAmount} ${currency}; срочность: ${urgency || 'standard'}; итого от ${amount} ${currency}`
-    };
   }
 
-  return null;
+  return calculateFixedPrice(lead, service, prices, currency);
+}
+
+function calculateFixedPrice(lead, service, prices, currency) {
+  const priceRule = prices.prices?.[service.code] || prices.prices?.[`${service.code}_base`];
+  const amount = Number(priceRule?.value || 0);
+  if (!amount) return null;
+
+  const unit = priceRule.unit || 'за заказ';
+  const note = priceRule.comment || 'Тестовая цена для проверки сценария.';
+
+  return {
+    type: 'fixed_price',
+    priceEstimate: `от ${amount} ${currency}`,
+    clientText: [
+      `Предварительная стоимость: от ${amount} ${currency} ${unit}.`,
+      note,
+      'Итоговая цена зависит от параметров заказа и подтверждается менеджером.'
+    ].join('\n'),
+    details: `${lead.service?.name || service.name}; тестовая цена: от ${amount} ${currency} ${unit}`
+  };
 }
 
 function createLead(msg) {
