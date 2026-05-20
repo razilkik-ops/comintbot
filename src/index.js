@@ -260,26 +260,6 @@ async function handleClientMessage(msg) {
     return;
   }
 
-  if (isServicesRequest(text)) {
-    await sendServices(msg);
-    return;
-  }
-
-  if (isPriceRequest(text)) {
-    await sendPrices(chatId);
-    return;
-  }
-
-  if (isStatusRequest(text)) {
-    await sendClientStatus(chatId);
-    return;
-  }
-
-  if (text === '/manager' || isManagerRequest(text)) {
-    await startManagerRequest(msg);
-    return;
-  }
-
   const session = await getSession(userId);
 
   if (isBackRequest(text)) {
@@ -294,6 +274,36 @@ async function handleClientMessage(msg) {
 
   if (session.stage === 'catalog_services') {
     await handleCatalogService(msg, session);
+    return;
+  }
+
+  if (session.stage === 'price_categories') {
+    await handlePriceCategory(msg, session);
+    return;
+  }
+
+  if (session.stage === 'price_services') {
+    await handlePriceService(msg, session);
+    return;
+  }
+
+  if (isServicesRequest(text)) {
+    await sendServices(msg);
+    return;
+  }
+
+  if (isPriceRequest(text)) {
+    await sendPrices(msg);
+    return;
+  }
+
+  if (isStatusRequest(text)) {
+    await sendClientStatus(chatId);
+    return;
+  }
+
+  if (text === '/manager' || isManagerRequest(text)) {
+    await startManagerRequest(msg);
     return;
   }
 
@@ -516,6 +526,12 @@ async function handleBack(msg, session) {
     return;
   }
 
+  if (session.stage === 'price_categories') {
+    await resetSession(userId);
+    await sendWelcome(chatId);
+    return;
+  }
+
   if (session.stage === 'catalog_services') {
     const services = await loadServices();
     const groups = groupServicesByCategory(services);
@@ -524,6 +540,17 @@ async function handleBack(msg, session) {
       updatedAt: new Date().toISOString()
     });
     await sendMessage(chatId, `Выберите раздел каталога ${COMPANY_NAME}:`, catalogCategoryKeyboard(groups));
+    return;
+  }
+
+  if (session.stage === 'price_services') {
+    const services = await loadServices();
+    const groups = groupServicesByCategory(services);
+    await saveSession(userId, {
+      stage: 'price_categories',
+      updatedAt: new Date().toISOString()
+    });
+    await sendMessage(chatId, 'Выберите раздел, чтобы посмотреть тестовые цены:', catalogCategoryKeyboard(groups));
     return;
   }
 
@@ -684,17 +711,73 @@ async function backToSavedMenu(chatId, userId, session) {
   await sendWelcome(chatId);
 }
 
-async function sendPrices(chatId) {
+async function sendPrices(msg) {
+  const chatId = msg.chat.id;
+  const userId = String(msg.from?.id || chatId);
+  const services = await loadServices();
+  const groups = groupServicesByCategory(services);
+
+  await saveSession(userId, {
+    stage: 'price_categories',
+    updatedAt: new Date().toISOString()
+  });
+
   await sendMessage(
     chatId,
     [
-      `Для тестирования в боте включены примерные цены в BYN.`,
+      'Выберите раздел, чтобы посмотреть тестовые цены.',
       '',
-      'Это не реальный прайс сайта Comint, а тестовые значения, чтобы проверить сценарии расчёта и передачу стоимости менеджеру.',
-      '',
-      'Выберите услугу в каталоге или напишите задачу своими словами — я покажу предварительную тестовую стоимость.'
+      'Цены примерные, только для проверки бота.'
     ].join('\n'),
-    mainKeyboard()
+    catalogCategoryKeyboard(groups)
+  );
+}
+
+async function handlePriceCategory(msg, session) {
+  const chatId = msg.chat.id;
+  const userId = String(msg.from?.id || chatId);
+  const text = (msg.text || msg.caption || '').trim();
+  const services = await loadServices();
+  const groups = groupServicesByCategory(services);
+  const group = groups.find(([category]) => normalizeText(category) === normalizeText(text));
+
+  if (!group) {
+    await sendMessage(chatId, 'Выберите раздел кнопкой ниже.', catalogCategoryKeyboard(groups));
+    return;
+  }
+
+  const [category, items] = group;
+  await saveSession(userId, {
+    ...session,
+    stage: 'price_services',
+    priceCategory: category,
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(
+    chatId,
+    `Раздел: ${category}. Выберите услугу, чтобы посмотреть цену:`,
+    catalogServiceKeyboard(items)
+  );
+}
+
+async function handlePriceService(msg, session) {
+  const chatId = msg.chat.id;
+  const text = (msg.text || msg.caption || '').trim();
+  const services = await loadServices();
+  const group = groupServicesByCategory(services).find(([category]) => category === session.priceCategory);
+  const items = group?.[1] || [];
+  const service = items.find((item) => normalizeText(item.name) === normalizeText(text));
+
+  if (!service) {
+    await sendMessage(chatId, 'Выберите услугу кнопкой ниже или нажмите «Назад».', catalogServiceKeyboard(items));
+    return;
+  }
+
+  await sendMessage(
+    chatId,
+    formatServicePriceText(service),
+    catalogServiceKeyboard(items)
   );
 }
 
@@ -1305,71 +1388,79 @@ async function notifyManagers(lead) {
 
 function formatLeadForManager(lead) {
   const lines = [];
-  lines.push('🆕 Новая заявка из Telegram-бота');
+  lines.push(`Новая заявка ${lead.id}`);
+  lines.push('━━━━━━━━━━━━━━━━━━━━');
   lines.push('');
-  lines.push(`ID: ${lead.id}`);
+  lines.push('Заявка');
+  lines.push(`Статус: ${formatLeadStatus(lead.status)}`);
   lines.push(`Создана: ${formatDate(lead.createdAt)}`);
+  lines.push(`ID: ${lead.id}`);
   lines.push('');
+
+  lines.push('Клиент');
   lines.push(`Клиент: ${lead.clientName || lead.user?.firstName || 'не указано'}`);
   lines.push(`Телефон: ${lead.phone || 'не указан'}`);
   lines.push(`Telegram: ${formatTelegramUser(lead.user)}`);
   lines.push('');
+
+  lines.push('Услуга');
   lines.push(`Услуга: ${lead.service?.name || 'не определена'}`);
   lines.push(`Категория: ${lead.service?.category || 'не определена'}`);
   if (lead.service?.sourceUrl) {
-    lines.push(`Страница услуги: ${lead.service.sourceUrl}`);
+    lines.push(`Страница: ${lead.service.sourceUrl}`);
   }
   if (lead.service?.priceNote) {
-    lines.push(`Цена на сайте: ${lead.service.priceNote}`);
+    lines.push(`Примечание по цене: ${lead.service.priceNote}`);
   }
-
   if (lead.sourceFunnel) {
     lines.push(`Воронка: ${lead.sourceFunnel}`);
   }
-
   if (lead.managerReason) {
     lines.push(`Причина передачи: ${lead.managerReason}`);
   }
-
   if (lead.discountOffer) {
     lines.push(`Бонус: ${lead.discountOffer}`);
   }
-
   if (lead.initialMessage) {
-    lines.push('');
     lines.push(`Первое сообщение: ${lead.initialMessage}`);
   }
+  lines.push('');
 
+  lines.push('Параметры');
   if (lead.answers?.length) {
-    lines.push('');
-    lines.push('Параметры:');
     for (const answer of lead.answers) {
       lines.push(`— ${answer.label}: ${answer.rawValue || answer.value}`);
     }
+  } else {
+    lines.push('— не указаны');
   }
+  lines.push('');
 
+  lines.push('Комментарии');
   if (lead.comments?.length) {
-    lines.push('');
-    lines.push('Комментарии клиента:');
     for (const comment of lead.comments) {
       lines.push(`— ${comment.text}`);
     }
+  } else {
+    lines.push('— нет');
   }
-
   lines.push('');
-  lines.push(`Стоимость: ${lead.priceEstimate || 'Требуется расчёт менеджером'}`);
 
+  lines.push('Стоимость');
+  lines.push(`Стоимость: ${lead.priceEstimate || 'Требуется расчёт менеджером'}`);
   if (lead.calculation?.details) {
     lines.push(`Расчёт: ${lead.calculation.details}`);
   }
-
   lines.push('');
+
+  lines.push('Файлы');
   lines.push(`Файлы: ${lead.files?.length ? `${lead.files.length} шт. Ниже будут отправлены копии файлов.` : lead.noFile ? 'файла нет' : 'не прикреплены'}`);
   lines.push('');
-  lines.push('Ответ клиенту из группы:');
+
+  lines.push('Ответ клиенту');
   lines.push(`/reply ${lead.id} текст сообщения`);
   lines.push('');
-  lines.push('Команды менеджера:');
+  lines.push('Команды менеджера');
   lines.push(`/lead ${lead.id} — показать заявку`);
   lines.push(`/status ${lead.id} в работе — обновить статус`);
   lines.push(`/done ${lead.id} — отметить выполненной`);
@@ -1455,6 +1546,49 @@ function calculateFixedPrice(lead, service, prices, currency) {
     ].join('\n'),
     details: `${lead.service?.name || service.name}; тестовая цена: от ${amount} ${currency} ${unit}`
   };
+}
+
+async function formatServicePriceText(service) {
+  const prices = await readJson('prices.json', { currency: 'BYN', prices: {} });
+  const currency = prices.currency || 'BYN';
+  const priceRule = getServicePriceRule(service, prices);
+
+  if (!priceRule) {
+    return [
+      `${service.name}`,
+      '',
+      'Цена: требуется расчёт менеджером.'
+    ].join('\n');
+  }
+
+  return [
+    `${service.name}`,
+    '',
+    `Цена: от ${priceRule.amount} ${currency}${priceRule.unit ? ` ${priceRule.unit}` : ''}`,
+    '',
+    'Тестовая цена для проверки бота. Итоговую стоимость подтверждает менеджер.'
+  ].join('\n');
+}
+
+function getServicePriceRule(service, prices) {
+  if (service.calc?.type === 'area_m2') {
+    const priceRule = prices.prices?.[service.calc.priceKey];
+    const amount = Number(priceRule?.value || 0);
+    if (amount) return { amount, unit: `за ${priceRule.unit || 'м²'}` };
+  }
+
+  if (service.calc?.type === 'tiered_quantity') {
+    const priceRule = prices.prices?.[service.calc.priceKey];
+    const tiers = Object.values(priceRule?.tiers || {});
+    const amounts = tiers.map((tier) => Number(tier.value || 0)).filter(Boolean);
+    if (amounts.length) return { amount: Math.min(...amounts), unit: priceRule.unit || 'за тираж' };
+  }
+
+  const priceRule = prices.prices?.[service.code] || prices.prices?.[`${service.code}_base`];
+  const amount = Number(priceRule?.value || 0);
+  if (amount) return { amount, unit: priceRule.unit || 'за заказ' };
+
+  return null;
 }
 
 function createLead(msg) {
@@ -2080,7 +2214,6 @@ function mainKeyboard() {
     keyboard: [
       ['📋 Каталог', '💰 Цены'],
       ['Полиграфия', 'Сувениры'],
-      ['Баннер', 'Наружная реклама'],
       ['Сложный проект'],
       ['🔎 Статус заявки'],
       ['👨‍💼 Позвать менеджера']
