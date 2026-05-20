@@ -23,7 +23,8 @@ const WEBSITE_BASE_URL = 'https://comint.onrender.com';
 const DEFAULT_PRICE_NOTE = 'На сайте Comint числовые цены не опубликованы. Стоимость рассчитывается индивидуально после уточнения тиража, размеров, материала, макета и сроков.';
 
 const CANCEL_TEXTS = ['отмена', 'отменить', 'отменить заявку', '❌ отменить заявку', '/cancel'];
-const SERVICES_TEXTS = ['услуги', '📋 услуги', 'каталог', 'каталог услуг', '/services'];
+const BACK_TEXTS = ['назад', '⬅️ назад', '← назад'];
+const SERVICES_TEXTS = ['услуги', '📋 услуги', '📋 каталог', 'каталог', 'каталог услуг', '/services'];
 const STATUS_TEXTS = ['статус', 'статус заявки', '🔎 статус заявки', '/status'];
 const PRICE_TEXTS = ['цены', '💰 цены', 'стоимость', 'сколько стоит', 'прайс', 'прайс-лист', 'прайс лист', 'прайс-листы', 'прайс листы', '/price', '/prices'];
 
@@ -260,7 +261,7 @@ async function handleClientMessage(msg) {
   }
 
   if (isServicesRequest(text)) {
-    await sendServices(chatId);
+    await sendServices(msg);
     return;
   }
 
@@ -271,6 +272,28 @@ async function handleClientMessage(msg) {
 
   if (isStatusRequest(text)) {
     await sendClientStatus(chatId);
+    return;
+  }
+
+  if (text === '/manager' || isManagerRequest(text)) {
+    await startManagerRequest(msg);
+    return;
+  }
+
+  const session = await getSession(userId);
+
+  if (isBackRequest(text)) {
+    await handleBack(msg, session);
+    return;
+  }
+
+  if (session.stage === 'catalog_categories') {
+    await handleCatalogCategory(msg, session);
+    return;
+  }
+
+  if (session.stage === 'catalog_services') {
+    await handleCatalogService(msg, session);
     return;
   }
 
@@ -289,18 +312,11 @@ async function handleClientMessage(msg) {
     return;
   }
 
-  if (text === '/manager' || isManagerRequest(text)) {
-    await startManagerRequest(msg);
-    return;
-  }
-
   const fileMeta = extractFileMeta(msg);
   if (fileMeta) {
     await handleClientFile(msg, fileMeta);
     return;
   }
-
-  const session = await getSession(userId);
 
   if (session.stage === 'polygraphy_product') {
     await handlePolygraphyProduct(msg, session);
@@ -409,32 +425,263 @@ async function sendHelp(chatId) {
       '/cancel — отменить текущую заявку',
       '',
       'Быстрый старт:',
-      '— Хочу заказать полиграфию',
-      '— Нужны сувениры с логотипом',
-      '— У меня сложный проект'
+      '— Полиграфия',
+      '— Сувениры',
+      '— Сложный проект'
     ].join('\n'),
     mainKeyboard()
   );
 }
 
-async function sendServices(chatId) {
+async function sendServices(msg) {
+  const chatId = msg.chat.id;
+  const userId = String(msg.from?.id || chatId);
   const services = await loadServices();
   const groups = groupServicesByCategory(services);
-  const lines = [
-    `Каталог услуг ${COMPANY_NAME} с сайта:`,
-    '',
-    ...groups.map(([category, items]) => {
-      const examples = items.slice(0, 4).map((service) => service.name).join(', ');
-      const tail = items.length > 4 ? ' и другие' : '';
-      return `— ${category}: ${examples}${tail}.`;
-    }),
-    '',
-    `Всего направлений: ${groups.length}, услуг: ${services.length}.`,
-    '',
-    'Напишите название услуги или задачу своими словами — я подберу сценарий заявки.'
-  ];
 
-  await sendMessage(chatId, lines.join('\n'), mainKeyboard());
+  await saveSession(userId, {
+    stage: 'catalog_categories',
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(
+    chatId,
+    `Выберите раздел каталога ${COMPANY_NAME}:`,
+    catalogCategoryKeyboard(groups)
+  );
+}
+
+async function handleCatalogCategory(msg, session) {
+  const chatId = msg.chat.id;
+  const userId = String(msg.from?.id || chatId);
+  const text = (msg.text || msg.caption || '').trim();
+  const services = await loadServices();
+  const groups = groupServicesByCategory(services);
+  const group = groups.find(([category]) => normalizeText(category) === normalizeText(text));
+
+  if (!group) {
+    await sendMessage(chatId, 'Выберите раздел кнопкой ниже.', catalogCategoryKeyboard(groups));
+    return;
+  }
+
+  const [category, items] = group;
+  await saveSession(userId, {
+    ...session,
+    stage: 'catalog_services',
+    catalogCategory: category,
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(
+    chatId,
+    `Раздел: ${category}. Выберите услугу:`,
+    catalogServiceKeyboard(items)
+  );
+}
+
+async function handleCatalogService(msg, session) {
+  const chatId = msg.chat.id;
+  const text = (msg.text || msg.caption || '').trim();
+  const services = await loadServices();
+  const group = groupServicesByCategory(services).find(([category]) => category === session.catalogCategory);
+  const items = group?.[1] || [];
+  const service = items.find((item) => normalizeText(item.name) === normalizeText(text));
+
+  if (!service) {
+    await sendMessage(chatId, 'Выберите услугу кнопкой ниже или нажмите «Назад».', catalogServiceKeyboard(items));
+    return;
+  }
+
+  await startServiceFlow(msg, service, service.name, {
+    menuContext: {
+      type: 'catalog_services',
+      category: session.catalogCategory
+    }
+  });
+}
+
+async function handleBack(msg, session) {
+  const chatId = msg.chat.id;
+  const userId = String(msg.from?.id || chatId);
+
+  if (!session || session.stage === 'idle') {
+    await resetSession(userId);
+    await sendWelcome(chatId);
+    return;
+  }
+
+  if (session.stage === 'catalog_categories') {
+    await resetSession(userId);
+    await sendWelcome(chatId);
+    return;
+  }
+
+  if (session.stage === 'catalog_services') {
+    const services = await loadServices();
+    const groups = groupServicesByCategory(services);
+    await saveSession(userId, {
+      stage: 'catalog_categories',
+      updatedAt: new Date().toISOString()
+    });
+    await sendMessage(chatId, `Выберите раздел каталога ${COMPANY_NAME}:`, catalogCategoryKeyboard(groups));
+    return;
+  }
+
+  if (session.stage === 'polygraphy_product' || session.stage === 'souvenir_type' || session.stage === 'complex_project_details') {
+    await resetSession(userId);
+    await sendWelcome(chatId);
+    return;
+  }
+
+  if (session.stage === 'polygraphy_custom') {
+    await saveSession(userId, { ...session, stage: 'polygraphy_product', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'Выберите тип полиграфии:', polygraphyProductKeyboard());
+    return;
+  }
+
+  if (session.stage === 'polygraphy_quantity') {
+    removeFieldAnswer(session.lead, 'product_type');
+    session.lead.service = {
+      code: 'polygraphy',
+      name: 'Полиграфия',
+      category: 'Полиграфия',
+      managerOnly: false,
+      sourceUrl: `${WEBSITE_BASE_URL}/services#category-print`,
+      priceNote: DEFAULT_PRICE_NOTE
+    };
+    await saveSession(userId, { ...session, stage: 'polygraphy_product', serviceCode: 'polygraphy', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'Выберите тип полиграфии:', polygraphyProductKeyboard());
+    return;
+  }
+
+  if (session.stage === 'polygraphy_urgency') {
+    removeFieldAnswer(session.lead, 'quantity_range');
+    await saveSession(userId, { ...session, stage: 'polygraphy_quantity', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'Какой тираж планируете?', quantityRangeKeyboard());
+    return;
+  }
+
+  if (session.stage === 'souvenir_event') {
+    removeFieldAnswer(session.lead, 'souvenir_type');
+    await saveSession(userId, { ...session, stage: 'souvenir_type', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'Выберите тип сувенира, который вас интересует:', souvenirTypeKeyboard());
+    return;
+  }
+
+  if (session.stage === 'ask_questions') {
+    await backFromQuestionFlow(chatId, userId, session);
+    return;
+  }
+
+  if (session.stage === 'ask_file') {
+    await backFromFileStep(chatId, userId, session);
+    return;
+  }
+
+  if (session.stage === 'ask_phone') {
+    if (session.serviceCode === 'manager_request') {
+      await resetSession(userId);
+      await sendWelcome(chatId);
+      return;
+    }
+
+    if (session.serviceCode === 'complex_project') {
+      await saveSession(userId, { ...session, stage: 'complex_project_details', updatedAt: new Date().toISOString() });
+      await sendMessage(
+        chatId,
+        'Опишите задачу: что нужно сделать, тираж/размер, сроки и есть ли макет.',
+        serviceKeyboard()
+      );
+      return;
+    }
+
+    await saveSession(userId, { ...session, stage: 'ask_file', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'Можно прикрепить макет, логотип, фото примера или техническое задание.', fileKeyboard());
+    return;
+  }
+
+  if (session.stage === 'ask_name') {
+    delete session.lead.phone;
+    await saveSession(userId, { ...session, stage: 'ask_phone', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, phoneRequestText(), contactKeyboard());
+    return;
+  }
+
+  await resetSession(userId);
+  await sendWelcome(chatId);
+}
+
+async function backFromQuestionFlow(chatId, userId, session) {
+  const service = await loadSessionService(session);
+  if (!service) {
+    await backToSavedMenu(chatId, userId, session);
+    return;
+  }
+
+  const questions = getServiceQuestions(service);
+  const currentQuestion = getNextQuestion(service, session.lead);
+  const currentIndex = currentQuestion ? questions.findIndex((item) => item.key === currentQuestion.key) : questions.length;
+
+  if (currentIndex <= 0) {
+    await backToSavedMenu(chatId, userId, session);
+    return;
+  }
+
+  const previousQuestion = questions[currentIndex - 1];
+  removeFieldAnswer(session.lead, previousQuestion.key);
+  await saveSession(userId, { ...session, stage: 'ask_questions', updatedAt: new Date().toISOString() });
+  await sendMessage(chatId, formatQuestionPrompt(service, session.lead, previousQuestion), serviceKeyboard());
+}
+
+async function backFromFileStep(chatId, userId, session) {
+  if (session.stage === 'ask_file' && session.lead?.sourceFunnel === 'polygraphy') {
+    removeFieldAnswer(session.lead, 'urgency');
+    await saveSession(userId, { ...session, stage: 'polygraphy_urgency', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'По срокам как удобнее?', urgencyKeyboard());
+    return;
+  }
+
+  if (session.stage === 'ask_file' && session.lead?.sourceFunnel === 'souvenir') {
+    removeFieldAnswer(session.lead, 'souvenir_event');
+    await saveSession(userId, { ...session, stage: 'souvenir_event', updatedAt: new Date().toISOString() });
+    await sendMessage(chatId, 'Для какого события вам нужны сувениры?', souvenirEventKeyboard());
+    return;
+  }
+
+  const service = await loadSessionService(session);
+  if (!service) {
+    await backToSavedMenu(chatId, userId, session);
+    return;
+  }
+
+  const questions = getServiceQuestions(service);
+  const previousQuestion = [...questions].reverse().find((question) => session.lead?.fields?.[question.key] !== undefined);
+  if (!previousQuestion) {
+    await backToSavedMenu(chatId, userId, session);
+    return;
+  }
+
+  removeFieldAnswer(session.lead, previousQuestion.key);
+  await saveSession(userId, { ...session, stage: 'ask_questions', updatedAt: new Date().toISOString() });
+  await sendMessage(chatId, formatQuestionPrompt(service, session.lead, previousQuestion), serviceKeyboard());
+}
+
+async function backToSavedMenu(chatId, userId, session) {
+  if (session.menuContext?.type === 'catalog_services') {
+    const services = await loadServices();
+    const group = groupServicesByCategory(services).find(([category]) => category === session.menuContext.category);
+    const items = group?.[1] || [];
+    await saveSession(userId, {
+      stage: 'catalog_services',
+      catalogCategory: session.menuContext.category,
+      updatedAt: new Date().toISOString()
+    });
+    await sendMessage(chatId, `Раздел: ${session.menuContext.category}. Выберите услугу:`, catalogServiceKeyboard(items));
+    return;
+  }
+
+  await resetSession(userId);
+  await sendWelcome(chatId);
 }
 
 async function sendPrices(chatId) {
@@ -764,7 +1011,7 @@ async function routeFreeText(msg) {
   await startServiceFlow(msg, match.best.service, text);
 }
 
-async function startServiceFlow(msg, service, initialText = '') {
+async function startServiceFlow(msg, service, initialText = '', options = {}) {
   const userId = String(msg.from?.id || msg.chat.id);
   const lead = createLead(msg);
 
@@ -787,6 +1034,7 @@ async function startServiceFlow(msg, service, initialText = '') {
     stage: nextQuestion ? 'ask_questions' : 'ask_file',
     serviceCode: service.code,
     lead,
+    menuContext: options.menuContext || null,
     updatedAt: new Date().toISOString()
   };
 
@@ -1300,6 +1548,11 @@ async function loadServices() {
   return services;
 }
 
+async function loadSessionService(session = {}) {
+  const services = await loadServices();
+  return services.find((item) => item.code === session.serviceCode) || session.lead?.service || null;
+}
+
 function normalizeService(service) {
   return {
     ...service,
@@ -1502,6 +1755,14 @@ function setFieldAnswer(lead, key, label, value, rawValue) {
   }
 }
 
+function removeFieldAnswer(lead, key) {
+  if (!lead || !key) return;
+  if (lead.fields) delete lead.fields[key];
+  if (Array.isArray(lead.answers)) {
+    lead.answers = lead.answers.filter((item) => item.key !== key);
+  }
+}
+
 function extractFileMeta(msg) {
   if (msg.document) {
     return {
@@ -1641,6 +1902,11 @@ function isComplexProjectEntry(text = '') {
 function isCancelRequest(text = '') {
   const normalized = normalizeText(text);
   return CANCEL_TEXTS.some((phrase) => normalized === normalizeText(phrase));
+}
+
+function isBackRequest(text = '') {
+  const normalized = normalizeText(text);
+  return BACK_TEXTS.some((phrase) => normalized === normalizeText(phrase));
 }
 
 function isServicesRequest(text = '') {
@@ -1798,14 +2064,34 @@ function formatDate(value) {
 function mainKeyboard() {
   return {
     keyboard: [
-      ['Хочу заказать полиграфию'],
-      ['Нужны сувениры с логотипом'],
-      ['У меня сложный проект, хочу обсудить с менеджером'],
-      ['Баннер / широкоформат', 'Наружная реклама'],
-      ['📋 Услуги', '💰 Цены'],
+      ['📋 Каталог', '💰 Цены'],
+      ['Полиграфия', 'Сувениры'],
+      ['Баннер', 'Наружная реклама'],
+      ['Сложный проект'],
       ['🔎 Статус заявки'],
       ['👨‍💼 Позвать менеджера']
     ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function catalogCategoryKeyboard(groups) {
+  const rows = chunkRows(groups.map(([category]) => category), 2);
+  rows.push(['⬅️ Назад', '🏠 Главное меню']);
+  return {
+    keyboard: rows,
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function catalogServiceKeyboard(services) {
+  const rows = services.map((service) => [service.name]);
+  rows.push(['⬅️ Назад', '🏠 Главное меню']);
+  rows.push(['👨‍💼 Позвать менеджера']);
+  return {
+    keyboard: rows,
     resize_keyboard: true,
     one_time_keyboard: false
   };
@@ -1817,7 +2103,7 @@ function polygraphyProductKeyboard() {
       ['Визитки', 'Буклеты/листовки'],
       ['Наклейки/этикетки', 'Другое'],
       ['👨‍💼 Позвать менеджера'],
-      ['🏠 Главное меню']
+      ['⬅️ Назад', '🏠 Главное меню']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
@@ -1830,7 +2116,7 @@ function quantityRangeKeyboard() {
       ['До 100 шт', '100-500 шт'],
       ['500-1000 шт', 'Свыше 1000 шт'],
       ['👨‍💼 Позвать менеджера'],
-      ['❌ Отменить заявку']
+      ['⬅️ Назад', '❌ Отменить заявку']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
@@ -1843,7 +2129,7 @@ function urgencyKeyboard() {
       ['Обычный заказ'],
       ['Срочно, нужно завтра'],
       ['👨‍💼 Позвать менеджера'],
-      ['❌ Отменить заявку']
+      ['⬅️ Назад', '❌ Отменить заявку']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
@@ -1858,7 +2144,7 @@ function souvenirTypeKeyboard() {
       ['Кружки и термокружки'],
       ['Ежедневники и органайзеры'],
       ['👨‍💼 Позвать менеджера'],
-      ['🏠 Главное меню']
+      ['⬅️ Назад', '🏠 Главное меню']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
@@ -1872,7 +2158,7 @@ function souvenirEventKeyboard() {
       ['Подарок для партнера'],
       ['Промо-раздача'],
       ['👨‍💼 Позвать менеджера'],
-      ['❌ Отменить заявку']
+      ['⬅️ Назад', '❌ Отменить заявку']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
@@ -1883,7 +2169,7 @@ function serviceKeyboard() {
   return {
     keyboard: [
       ['👨‍💼 Позвать менеджера'],
-      ['❌ Отменить заявку'],
+      ['⬅️ Назад', '❌ Отменить заявку'],
       ['🏠 Главное меню']
     ],
     resize_keyboard: true,
@@ -1896,7 +2182,7 @@ function fileKeyboard() {
     keyboard: [
       ['Файла нет'],
       ['👨‍💼 Позвать менеджера'],
-      ['❌ Отменить заявку'],
+      ['⬅️ Назад', '❌ Отменить заявку'],
       ['🏠 Главное меню']
     ],
     resize_keyboard: true,
@@ -1908,7 +2194,7 @@ function contactKeyboard() {
   return {
     keyboard: [
       [{ text: 'Отправить телефон', request_contact: true }],
-      ['❌ Отменить заявку'],
+      ['⬅️ Назад', '❌ Отменить заявку'],
       ['🏠 Главное меню']
     ],
     resize_keyboard: true,
@@ -1918,12 +2204,20 @@ function contactKeyboard() {
 
 function nameKeyboard(user = {}) {
   const firstName = user?.first_name || '';
-  const rows = firstName ? [[firstName], ['❌ Отменить заявку']] : [['❌ Отменить заявку']];
+  const rows = firstName ? [[firstName], ['⬅️ Назад', '❌ Отменить заявку']] : [['⬅️ Назад', '❌ Отменить заявку']];
   return {
     keyboard: rows,
     resize_keyboard: true,
     one_time_keyboard: true
   };
+}
+
+function chunkRows(items, columns = 2) {
+  const rows = [];
+  for (let index = 0; index < items.length; index += columns) {
+    rows.push(items.slice(index, index + columns));
+  }
+  return rows;
 }
 
 async function sendMessage(chatId, text, replyMarkup = undefined) {
