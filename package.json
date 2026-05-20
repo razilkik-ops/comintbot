@@ -1,0 +1,21 @@
+{
+  "name": "comint-telegram-sales-bot",
+  "version": "1.0.0",
+  "description": "Telegram sales bot for Comint.by on Node.js: webhook, fuzzy service matching, lead collection, file forwarding, manager notifications.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "set-webhook": "node scripts/setWebhook.js",
+    "delete-webhook": "node scripts/deleteWebhook.js",
+    "webhook-info": "node scripts/getWebhookInfo.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
