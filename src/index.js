@@ -17,6 +17,10 @@ const MANAGER_CHAT_ID = process.env.MANAGER_CHAT_ID || '';
 const WEBHOOK_PATH_SECRET = process.env.WEBHOOK_PATH_SECRET || 'telegram-webhook';
 const TELEGRAM_SECRET_TOKEN = process.env.TELEGRAM_SECRET_TOKEN || '';
 
+const CANCEL_TEXTS = ['отмена', 'отменить', 'отменить заявку', '❌ отменить заявку', '/cancel'];
+const SERVICES_TEXTS = ['услуги', '📋 услуги', 'каталог', 'каталог услуг', '/services'];
+const STATUS_TEXTS = ['статус', 'статус заявки', '🔎 статус заявки', '/status'];
+
 if (!BOT_TOKEN) {
   console.error('Ошибка: укажите BOT_TOKEN в .env');
   process.exit(1);
@@ -103,6 +107,66 @@ async function handleManagerChatMessage(msg) {
     });
     await saveLead(lead);
     await sendMessage(msg.chat.id, `Сообщение отправлено клиенту по заявке ${leadId}.`);
+    return;
+  }
+
+  if (text.startsWith('/lead')) {
+    const [, leadId] = text.split(/\s+/);
+    if (!leadId) {
+      await sendMessage(msg.chat.id, 'Формат:\n/lead LEAD_ID');
+      return;
+    }
+
+    const lead = await findLead(leadId);
+    await sendMessage(msg.chat.id, lead ? formatLeadForManager(lead) : `Заявка ${leadId} не найдена.`);
+    return;
+  }
+
+  if (text.startsWith('/done')) {
+    const [, leadId, ...messageParts] = text.split(/\s+/);
+    const clientText = messageParts.join(' ').trim();
+
+    if (!leadId) {
+      await sendMessage(msg.chat.id, 'Формат:\n/done LEAD_ID\nили\n/done LEAD_ID текст для клиента');
+      return;
+    }
+
+    const lead = await findLead(leadId);
+    if (!lead) {
+      await sendMessage(msg.chat.id, `Заявка ${leadId} не найдена.`);
+      return;
+    }
+
+    lead.status = 'done';
+    await saveLead(lead);
+
+    if (clientText) {
+      await sendMessage(lead.chatId, `Менеджер ${COMPANY_NAME}:\n\n${clientText}`);
+    }
+
+    await sendMessage(msg.chat.id, `Заявка ${leadId} отмечена как выполненная.`);
+    return;
+  }
+
+  if (text.startsWith('/status')) {
+    const [, leadId, ...statusParts] = text.split(/\s+/);
+    const status = statusParts.join(' ').trim();
+
+    if (!leadId || !status) {
+      await sendMessage(msg.chat.id, 'Формат:\n/status LEAD_ID новый статус');
+      return;
+    }
+
+    const lead = await findLead(leadId);
+    if (!lead) {
+      await sendMessage(msg.chat.id, `Заявка ${leadId} не найдена.`);
+      return;
+    }
+
+    lead.status = status;
+    lead.managerStatusUpdatedAt = new Date().toISOString();
+    await saveLead(lead);
+    await sendMessage(msg.chat.id, `Статус заявки ${leadId} обновлён: ${status}`);
   }
 }
 
@@ -117,8 +181,32 @@ async function handleClientMessage(msg) {
     return;
   }
 
+  if (isCancelRequest(text)) {
+    await resetSession(userId);
+    await sendMessage(
+      chatId,
+      [
+        'Хорошо, текущую заявку отменил.',
+        '',
+        'Когда будете готовы, напишите задачу обычными словами или выберите услугу в меню.'
+      ].join('\n'),
+      mainKeyboard()
+    );
+    return;
+  }
+
   if (text === '/help') {
     await sendHelp(chatId);
+    return;
+  }
+
+  if (isServicesRequest(text)) {
+    await sendServices(chatId);
+    return;
+  }
+
+  if (isStatusRequest(text)) {
+    await sendClientStatus(chatId);
     return;
   }
 
@@ -149,7 +237,7 @@ async function handleClientMessage(msg) {
     if (isNoFile(text)) {
       session.lead.noFile = true;
       await saveSession(userId, { ...session, stage: 'ask_phone' });
-      await sendMessage(chatId, 'Хорошо, зафиксировал: файла пока нет.\n\nОставьте номер телефона для связи с менеджером.\n\nПример: +375 29 123-45-67', contactKeyboard());
+      await sendMessage(chatId, ['Хорошо, зафиксировал: файла пока нет.', '', phoneRequestText()].join('\n'), contactKeyboard());
       return;
     }
 
@@ -158,7 +246,7 @@ async function handleClientMessage(msg) {
       session.lead.comments = session.lead.comments || [];
       session.lead.comments.push({ at: new Date().toISOString(), text });
       await saveSession(userId, { ...session, stage: 'ask_phone' });
-      await sendMessage(chatId, 'Комментарий записал.\n\nОставьте номер телефона для связи с менеджером.\n\nПример: +375 29 123-45-67', contactKeyboard());
+      await sendMessage(chatId, ['Комментарий записал.', '', phoneRequestText()].join('\n'), contactKeyboard());
       return;
     }
   }
@@ -175,16 +263,16 @@ async function sendWelcome(chatId) {
   const text = [
     `Здравствуйте! Я бот компании ${COMPANY_NAME}.`,
     '',
-    'Помогу рассчитать заказ, принять макет и передать заявку менеджеру.',
+    'Помогу быстро оформить заявку: подскажу, какие параметры нужны, приму макет и передам всё менеджеру.',
     '',
-    'Можно написать обычными словами:',
+    'Можно написать как человеку:',
     '— нужен баннер 2 на 3',
     '— хочу наклейки на банки',
     '— нужны визитки 200 штук',
     '— печать на кружках',
     '— нужна вывеска с подсветкой',
     '',
-    'Или выберите вариант ниже.'
+    'Если пока не знаете точные параметры — ничего страшного, разберёмся по шагам.'
   ].join('\n');
 
   await sendMessage(chatId, text, mainKeyboard());
@@ -194,15 +282,66 @@ async function sendHelp(chatId) {
   await sendMessage(
     chatId,
     [
-      'Я могу помочь с услугами:',
-      '— баннеры и широкоформатная печать;',
-      '— наклейки, стикеры, этикетки;',
-      '— визитки и полиграфия;',
-      '— сувенирная продукция;',
-      '— наружная реклама;',
-      '— roll-up и стенды.',
+      'Как я могу помочь:',
       '',
-      'Для связи с менеджером напишите: менеджер, оператор или /manager.'
+      '— подобрать сценарий под вашу услугу;',
+      '— собрать размеры, тираж, сроки и другие параметры;',
+      '— принять макет, фото примера или техзадание;',
+      '— передать заявку менеджеру;',
+      '— показать статус последней заявки.',
+      '',
+      'Команды:',
+      '/services — список услуг',
+      '/status — статус последней заявки',
+      '/manager — позвать менеджера',
+      '/cancel — отменить текущую заявку'
+    ].join('\n'),
+    mainKeyboard()
+  );
+}
+
+async function sendServices(chatId) {
+  const services = await readJson('services.json', []);
+  const lines = [
+    'Вот с чем я уже умею работать:',
+    '',
+    ...services.map((service) => `— ${service.name}`),
+    '',
+    'Выберите услугу кнопкой ниже или напишите задачу своими словами.'
+  ];
+
+  await sendMessage(chatId, lines.join('\n'), mainKeyboard());
+}
+
+async function sendClientStatus(chatId) {
+  const leads = await readJson('leads.json', []);
+  const clientLeads = leads
+    .filter((lead) => String(lead.chatId) === String(chatId))
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+  const lead = clientLeads[0];
+  if (!lead) {
+    await sendMessage(
+      chatId,
+      [
+        'Пока не вижу сохранённых заявок в этом чате.',
+        '',
+        'Напишите, что нужно заказать, и я помогу всё оформить.'
+      ].join('\n'),
+      mainKeyboard()
+    );
+    return;
+  }
+
+  await sendMessage(
+    chatId,
+    [
+      `Последняя заявка: ${lead.id}`,
+      `Услуга: ${lead.service?.name || 'не определена'}`,
+      `Статус: ${formatLeadStatus(lead.status)}`,
+      `Создана: ${formatDate(lead.createdAt)}`,
+      '',
+      'Если нужно что-то уточнить, напишите «менеджер».'
     ].join('\n'),
     mainKeyboard()
   );
@@ -213,7 +352,7 @@ async function routeFreeText(msg) {
   const text = (msg.text || msg.caption || '').trim();
 
   if (!text) {
-    await sendMessage(chatId, 'Напишите, что хотите заказать, или выберите вариант в меню.', mainKeyboard());
+    await sendMessage(chatId, 'Напишите, что хотите заказать, или выберите услугу в меню. Можно коротко: «баннер 2 на 3» или «наклейки 100 штук».', mainKeyboard());
     return;
   }
 
@@ -224,11 +363,11 @@ async function routeFreeText(msg) {
     await sendMessage(
       chatId,
       [
-        'Я пока не понял, что именно нужно рассчитать.',
+        'Пока не уверен, какую услугу выбрать.',
         '',
-        'Могу помочь с баннерами, наклейками, визитками, листовками, сувенирной продукцией, наружной рекламой и стендами.',
+        'Напишите чуть подробнее: что нужно изготовить, примерный размер, тираж и срок.',
         '',
-        'Напишите задачу чуть подробнее или нажмите «Позвать менеджера».'
+        'Например: «баннер 2 на 3 к пятнице» или «круглые наклейки 100 штук». Если проще живым голосом — нажмите «Позвать менеджера».'
       ].join('\n'),
       mainKeyboard()
     );
@@ -237,12 +376,12 @@ async function routeFreeText(msg) {
 
   if (match.ambiguous.length > 1) {
     const rows = match.ambiguous.slice(0, 4).map((item) => [item.service.name]);
-    rows.push(['👨‍💼 Позвать менеджера']);
+    rows.push(['👨‍💼 Позвать менеджера'], ['🏠 Главное меню']);
 
     await sendMessage(
       chatId,
       [
-        'Нашёл несколько похожих вариантов. Что ближе к вашей задаче?',
+        'Нашёл несколько похожих вариантов. Выберите, что ближе к вашей задаче:',
         '',
         ...match.ambiguous.slice(0, 4).map((item, index) => `${index + 1}. ${item.service.name}`)
       ].join('\n'),
@@ -285,10 +424,10 @@ async function startServiceFlow(msg, service, initialText = '') {
     await sendMessage(
       msg.chat.id,
       [
-        service.intro || `Понял: ${service.name}.`,
-        already ? `\nУже понял из сообщения:\n${already}` : '',
+        service.intro || `Понял, оформляем: ${service.name}.`,
+        already ? `\nУже записал из сообщения:\n${already}` : '',
         '',
-        nextQuestion.prompt
+        formatQuestionPrompt(service, lead, nextQuestion)
       ].filter(Boolean).join('\n'),
       serviceKeyboard()
     );
@@ -304,7 +443,7 @@ async function handleQuestionAnswer(msg, session) {
 
   if (!service) {
     await resetSession(userId);
-    await sendMessage(msg.chat.id, 'Сценарий услуги не найден. Напишите запрос заново или позовите менеджера.', mainKeyboard());
+    await sendMessage(msg.chat.id, 'Не нашёл сценарий этой услуги. Давайте начнём заново или сразу подключим менеджера.', mainKeyboard());
     return;
   }
 
@@ -321,7 +460,7 @@ async function handleQuestionAnswer(msg, session) {
   const nextQuestion = getNextQuestion(service, session.lead);
   if (nextQuestion) {
     await saveSession(userId, { ...session, updatedAt: new Date().toISOString() });
-    await sendMessage(msg.chat.id, nextQuestion.prompt, serviceKeyboard());
+    await sendMessage(msg.chat.id, formatQuestionPrompt(service, session.lead, nextQuestion), serviceKeyboard());
     return;
   }
 
@@ -341,11 +480,11 @@ async function askForFileOrPhone(chatId, userId, session, service) {
       chatId,
       [
         calculation?.clientText || '',
-        'Прикрепите макет, логотип, фото примера или техническое задание.',
+        'Теперь можно прикрепить макет, логотип, фото примера или техническое задание.',
         '',
         'Подходящие форматы: jpg, png, jpeg, tiff, tif, pdf, cdr, psd.',
         '',
-        'Если файла нет — нажмите «Файла нет».'
+        'Если файла пока нет — нажмите «Файла нет», заявку всё равно передадим менеджеру.'
       ].filter(Boolean).join('\n'),
       fileKeyboard()
     );
@@ -353,7 +492,7 @@ async function askForFileOrPhone(chatId, userId, session, service) {
   }
 
   await saveSession(userId, { ...session, stage: 'ask_phone', updatedAt: new Date().toISOString() });
-  await sendMessage(chatId, 'Оставьте номер телефона для связи с менеджером.\n\nПример: +375 29 123-45-67', contactKeyboard());
+  await sendMessage(chatId, phoneRequestText(), contactKeyboard());
 }
 
 async function handleClientFile(msg, fileMeta) {
@@ -381,7 +520,7 @@ async function handleClientFile(msg, fileMeta) {
 
   await sendMessage(
     chatId,
-    'Файл получил и прикрепил к заявке.\n\nОставьте номер телефона для связи с менеджером.\n\nПример: +375 29 123-45-67',
+    ['Файл получил и прикрепил к заявке.', '', phoneRequestText()].join('\n'),
     contactKeyboard()
   );
 }
@@ -408,7 +547,13 @@ async function startManagerRequest(msg) {
   await saveSession(userId, session);
   await sendMessage(
     msg.chat.id,
-    'Передаю вас менеджеру.\n\nОставьте, пожалуйста, номер телефона и коротко опишите задачу.\n\nПример: +375 29 123-45-67',
+    [
+      'Хорошо, подключим менеджера.',
+      '',
+      'Оставьте номер телефона. Можно сразу в этом же сообщении написать пару слов о задаче.',
+      '',
+      'Пример: +375 29 123-45-67, нужна вывеска на фасад'
+    ].join('\n'),
     contactKeyboard()
   );
 }
@@ -420,15 +565,20 @@ async function handlePhoneAnswer(msg, session) {
   if (!phone) {
     await sendMessage(
       msg.chat.id,
-      'Не смог распознать номер телефона. Напишите, пожалуйста, в формате:\n+375 29 123-45-67\n\nИли нажмите «Позвать менеджера».',
+      'Не смог уверенно распознать номер телефона. Напишите, пожалуйста, в формате:\n+375 29 123-45-67\n\nИли нажмите «Отправить телефон».',
       contactKeyboard()
     );
     return;
   }
 
   session.lead.phone = phone;
+  const phoneComment = extractCommentAfterPhone(msg, phone);
+  if (phoneComment) {
+    session.lead.comments = session.lead.comments || [];
+    session.lead.comments.push({ at: new Date().toISOString(), text: phoneComment });
+  }
   await saveSession(userId, { ...session, stage: 'ask_name', updatedAt: new Date().toISOString() });
-  await sendMessage(msg.chat.id, 'Как к вам обращаться?', { remove_keyboard: true });
+  await sendMessage(msg.chat.id, 'Спасибо. Как к вам обращаться?', nameKeyboard(msg.from));
 }
 
 async function handleNameAnswer(msg, session) {
@@ -460,11 +610,13 @@ async function finalizeLead(chatId, userId, session) {
   await sendMessage(
     chatId,
     [
-      'Спасибо! Заявка принята.',
+      'Спасибо, заявку принял.',
       '',
-      'Менеджер проверит параметры, макет и подтвердит точную стоимость.',
+      'Менеджер проверит параметры, макет и предварительную стоимость. Если нужно будет что-то уточнить, напишем вам здесь.',
       '',
-      `Номер заявки: ${savedLead.id}`
+      `Номер заявки: ${savedLead.id}`,
+      '',
+      'Чтобы посмотреть статус позже, нажмите «Статус заявки».'
     ].join('\n'),
     mainKeyboard()
   );
@@ -544,6 +696,11 @@ function formatLeadForManager(lead) {
   lines.push('');
   lines.push('Ответ клиенту из группы:');
   lines.push(`/reply ${lead.id} текст сообщения`);
+  lines.push('');
+  lines.push('Команды менеджера:');
+  lines.push(`/lead ${lead.id} — показать заявку`);
+  lines.push(`/status ${lead.id} в работе — обновить статус`);
+  lines.push(`/done ${lead.id} — отметить выполненной`);
 
   return lines.join('\n');
 }
@@ -624,6 +781,12 @@ async function saveLead(lead) {
 
   await writeJson('leads.json', leads);
   return normalized;
+}
+
+async function findLead(leadId) {
+  const leads = await readJson('leads.json', []);
+  const normalizedId = normalizeLeadId(leadId);
+  return leads.find((item) => normalizeLeadId(item.id) === normalizedId) || null;
 }
 
 async function getSession(userId) {
@@ -769,6 +932,19 @@ function setAnswer(lead, question, rawValue) {
   setFieldAnswer(lead, question.key, question.label, value, rawValue);
 }
 
+function formatQuestionPrompt(service, lead, question) {
+  const questions = service.questions || [];
+  const currentIndex = questions.findIndex((item) => item.key === question.key);
+  const progress = currentIndex >= 0 ? `Вопрос ${currentIndex + 1} из ${questions.length}` : 'Следующий вопрос';
+
+  return [
+    progress,
+    question.prompt,
+    '',
+    'Если точного ответа нет, можно написать «не знаю».'
+  ].join('\n');
+}
+
 function setFieldAnswer(lead, key, label, value, rawValue) {
   lead.fields = lead.fields || {};
   lead.answers = lead.answers || [];
@@ -841,6 +1017,17 @@ function extractPhone(msg) {
   return match[0].trim();
 }
 
+function extractCommentAfterPhone(msg, phone) {
+  const text = (msg.text || msg.caption || '').trim();
+  if (!text || !phone) return '';
+
+  const escapedPhone = phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const withoutPhone = text.replace(new RegExp(escapedPhone), '').replace(/^[\s,.;:-]+|[\s,.;:-]+$/g, '').trim();
+  if (!withoutPhone || withoutPhone === text) return '';
+
+  return withoutPhone;
+}
+
 function parseDimensions(text) {
   const normalized = text
     .replace(/,/g, '.')
@@ -877,6 +1064,21 @@ function isManagerRequest(text = '') {
     'менеджер', 'оператор', 'живой человек', 'человек', 'позвоните', 'свяжитесь', 'свяжите', 'хочу с менеджером', 'хочу с человеком', 'не понял', 'перезвоните'
   ];
   return phrases.some((phrase) => normalized.includes(phrase));
+}
+
+function isCancelRequest(text = '') {
+  const normalized = normalizeText(text);
+  return CANCEL_TEXTS.some((phrase) => normalized === normalizeText(phrase));
+}
+
+function isServicesRequest(text = '') {
+  const normalized = normalizeText(text);
+  return SERVICES_TEXTS.some((phrase) => normalized === normalizeText(phrase));
+}
+
+function isStatusRequest(text = '') {
+  const normalized = normalizeText(text);
+  return STATUS_TEXTS.some((phrase) => normalized === normalizeText(phrase));
 }
 
 function isNoFile(text = '') {
@@ -935,6 +1137,29 @@ function formatTelegramUser(user = {}) {
   return parts.join(' / ');
 }
 
+function formatLeadStatus(status = '') {
+  const normalized = normalizeText(status);
+  const labels = {
+    draft: 'черновик',
+    new: 'новая, передана менеджеру',
+    done: 'выполнена'
+  };
+
+  return labels[normalized] || status || 'передана менеджеру';
+}
+
+function normalizeLeadId(value = '') {
+  return String(value).trim().toUpperCase();
+}
+
+function phoneRequestText() {
+  return [
+    'Оставьте номер телефона для связи с менеджером.',
+    '',
+    'Пример: +375 29 123-45-67'
+  ].join('\n');
+}
+
 function formatDate(value) {
   try {
     return new Intl.DateTimeFormat('ru-RU', {
@@ -953,7 +1178,8 @@ function mainKeyboard() {
       ['Баннер / широкоформат', 'Наклейки / этикетки'],
       ['Визитки / полиграфия', 'Листовки / флаеры'],
       ['Сувенирка', 'Наружная реклама'],
-      ['Roll-up / стенд', '👨‍💼 Позвать менеджера']
+      ['Roll-up / стенд', '📋 Услуги'],
+      ['🔎 Статус заявки', '👨‍💼 Позвать менеджера']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
@@ -964,6 +1190,7 @@ function serviceKeyboard() {
   return {
     keyboard: [
       ['👨‍💼 Позвать менеджера'],
+      ['❌ Отменить заявку'],
       ['🏠 Главное меню']
     ],
     resize_keyboard: true,
@@ -976,6 +1203,7 @@ function fileKeyboard() {
     keyboard: [
       ['Файла нет'],
       ['👨‍💼 Позвать менеджера'],
+      ['❌ Отменить заявку'],
       ['🏠 Главное меню']
     ],
     resize_keyboard: true,
@@ -987,8 +1215,19 @@ function contactKeyboard() {
   return {
     keyboard: [
       [{ text: 'Отправить телефон', request_contact: true }],
+      ['❌ Отменить заявку'],
       ['🏠 Главное меню']
     ],
+    resize_keyboard: true,
+    one_time_keyboard: true
+  };
+}
+
+function nameKeyboard(user = {}) {
+  const firstName = user?.first_name || '';
+  const rows = firstName ? [[firstName], ['❌ Отменить заявку']] : [['❌ Отменить заявку']];
+  return {
+    keyboard: rows,
     resize_keyboard: true,
     one_time_keyboard: true
   };
