@@ -329,6 +329,11 @@ async function handleClientMessage(msg) {
     return;
   }
 
+  if (extractPhone(msg)) {
+    await handleOrphanPhoneAnswer(msg);
+    return;
+  }
+
   await routeFreeText(msg);
 }
 
@@ -863,6 +868,47 @@ async function handlePhoneAnswer(msg, session) {
   }
   await saveSession(userId, { ...session, stage: 'ask_name', updatedAt: new Date().toISOString() });
   await sendMessage(msg.chat.id, 'Спасибо. Как к вам обращаться?', nameKeyboard(msg.from));
+}
+
+async function handleOrphanPhoneAnswer(msg) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const phone = extractPhone(msg);
+  const lead = createLead(msg);
+
+  lead.service = {
+    code: 'manager_request',
+    name: 'Запрос менеджера',
+    category: 'Ручная консультация',
+    managerOnly: true
+  };
+  lead.initialMessage = msg.text || msg.caption || '';
+  lead.phone = phone;
+  lead.managerReason = 'Клиент отправил телефон без активной сессии';
+
+  const phoneComment = extractCommentAfterPhone(msg, phone);
+  if (phoneComment) {
+    lead.comments = lead.comments || [];
+    lead.comments.push({ at: new Date().toISOString(), text: phoneComment });
+  }
+
+  await saveSession(userId, {
+    stage: 'ask_name',
+    serviceCode: 'manager_request',
+    lead,
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(
+    msg.chat.id,
+    [
+      'Спасибо, номер получил.',
+      '',
+      'Похоже, предыдущий шаг не сохранился, поэтому я оформлю заявку через менеджера, чтобы не потерять обращение.',
+      '',
+      'Как к вам обращаться?'
+    ].join('\n'),
+    nameKeyboard(msg.from)
+  );
 }
 
 async function handleNameAnswer(msg, session) {
