@@ -1,0 +1,182 @@
+[
+  {
+    "category": "Полиграфия",
+    "items": [
+      { "name": "Карточки с телефоном для машин", "url": "/services/kartochki-s-telefonom-dlya-mashin" },
+      { "name": "Фирменные конверты с логотипом", "url": "/services/firmennye-konverty-s-logotipom" },
+      { "name": "Магниты с блоком для записей", "url": "/services/magnityi-blok" },
+      { "name": "Папки", "url": "/services/papki" },
+      { "name": "Свадебная полиграфия", "url": "/services/svadebnaya-poligraphiya" },
+      { "name": "Блоки для записей", "url": "/services/bloki-dlya-zapisej-kub-bloki" },
+      { "name": "Ценники", "url": "/services/cenniki" },
+      { "name": "Бирки и ярлыки", "url": "/services/izgotovlenie-birok-i-yarlykov" },
+      { "name": "Сертификаты", "url": "/services/sertifikaty-diplomy" },
+      { "name": "Раздаточные материалы", "url": "/services/razdatochnue_materialu" },
+      { "name": "Гарантийные талоны", "url": "/services/garantijnye-talony" },
+      { "name": "Инструкции", "url": "/services/instrukciya" },
+      { "name": "Пропуска", "url": "/services/propusk" },
+      { "name": "Прайс-листы", "url": "/services/price_list" },
+      { "name": "Фирм. бланки", "url": "/services/pechat-firmennyh-blankov" },
+      { "name": "Плакаты и афиши", "url": "/services/plakaty-afishy" },
+      { "name": "Билеты", "url": "/services/priglasheniya-bilety" },
+      { "name": "Открытки", "url": "/services/izgotovlenie-i-pechat-otkrytok" },
+      { "name": "Блокноты", "url": "/services/bloknoty" },
+      { "name": "Меню", "url": "/services/pechat-menyu" },
+      { "name": "Каталоги", "url": "/services/katalogi" },
+      { "name": "Брошюры", "url": "/services/broshury" },
+      { "name": "Флаеры", "url": "/services/flaery", "code": "flyers" },
+      { "name": "Дизайн полиграфии", "url": "/services/design-poligrafii" },
+      { "name": "Буклеты", "url": "/services/buklety" },
+      { "name": "Листовки", "url": "/services/pechat-listovok" },
+      { "name": "Дисконтные карты", "url": "/services/discount" },
+      { "name": "Визитки", "url": "/services/izgotovlenie-i-pechat-vizitok", "code": "business_cards" },
+      { "name": "Бейджи", "url": "/services/bejdzh" }
+    ]
+  },
+  {
+    "category": "Сувенирная продукция",
+    "items": [
+      { "name": "Картонные коробки и пакеты для упаковки", "url": "/services/kartonnye-korobki-i-pakety-dlya-upakovki" },
+      { "name": "УФ печать в Минске", "url": "/services/uf-pechat-v-minske" },
+      { "name": "Ручки с логотипом", "url": "/services/ruchki-s-logotipom" },
+      { "name": "Ежедневники и планинги", "url": "/services/ezhednevniki" },
+      { "name": "Брелоки с логотипом", "url": "/services/breloki-s-logotipom" },
+      { "name": "Печать на магнитах", "url": "/services/pechat-na-magnitax1" },
+      { "name": "Сувенирные настенные часы с логотипом компании", "url": "/services/chasy" },
+      { "name": "Тканевые, баннерные и бумажные флажки", "url": "/services/flazhki" },
+      { "name": "Фирменные бумажные пакеты с логотипом", "url": "/services/bumazhnyie-paketyi" },
+      { "name": "Полиэтиленовые пакеты с логотипом", "url": "/services/polietilenovyie-paketyi" },
+      { "name": "Флешки с логотипом", "url": "/services/fleshki-s-logotipom" },
+      { "name": "Зажигалки с логотипом", "url": "/services/zazhigalki" },
+      { "name": "Подарочные наборы", "url": "/services/podarochnyie-naboryi" },
+      { "name": "Печать на кружках", "url": "/services/firmennyie-kruzhki" },
+      { "name": "Коврики для мыши", "url": "/services/kovriki-dlya-myishi" },
+      { "name": "Печать на тарелках", "url": "/services/tarelki" },
+      { "name": "Печать логотипов на пазлах", "url": "/services/pazlyi" },
+      { "name": "Кепки с логотипом", "url": "/services/kepki" },
+      { "name": "Печать на тканевых сумках", "url": "/services/eko-sumki" },
+      { "name": "Подставки под кружку", "url": "/services/podstavki-iz-probki" },
+      { "name": "Зеркала карманные", "url": "/services/zerkala-karmannye" },
+      { "name": "Сувениры для медработников", "url": "/services/suveniry-dlya-medrabotnikov" }
+    ]
+  },
+  {
+    "category": "Самоклеящаяся продукция",
+    "items": [
+      { "name": "Изготовление и печать полноцветных наклеек из пленки", "url": "/services/naklejki-print", "code": "stickers" },
+      { "name": "Печать наклеек из самоклеящейся бумаги", "url": "/services/naklejka-iz-bymagi" },
+      { "name": "Самоклеящиеся этикетки", "url": "/services/etiketki" },
+      { "name": "Изготовление наклеек на плоттере", "url": "/services/naklejki_plotter" },
+      { "name": "Гарантийные пломбы печатные", "url": "/services/garantijnye-plomby-pechatnye" },
+      { "name": "Знаки безопасности", "url": "/services/izgotovlenie-znakov-bezopasnosti" },
+      { "name": "Напольные наклейки", "url": "/services/naklejki-na-pol" },
+      { "name": "Трафареты. Изготовление самоклеющихся трафаретов для стен.", "url": "/services/trafarety" },
+      { "name": "Плоттерная резка", "url": "/services/plotternaya-rezka" }
+    ]
+  },
+  {
+    "category": "Наружная реклама",
+    "items": [
+      { "name": "Изготовление фасадных табличек и информационных указателей", "url": "/services/fasadnye-tablichki" },
+      { "name": "Изготовление наружных рекламных вывесок", "url": "/services/vyveski", "code": "outdoor" },
+      { "name": "Световые короба (лайтбоксы)", "url": "/services/svetovye-koroba" },
+      { "name": "Изготовление световых объемных букв", "url": "/services/obemnye-bukvy" },
+      { "name": "Изготовление штендеров", "url": "/services/shtender" },
+      { "name": "Рекламные пилоны, стеллы и другие отдельностоящие рекламные конструкции", "url": "/services/pilony" },
+      { "name": "Оформление витрин магазинов, реклама на витринах", "url": "/services/oformlenie-vitrin-minsk" },
+      { "name": "Оформление паспорта наружной рекламы", "url": "/services/oformlenie-naruzhnoj-reklamy" }
+    ]
+  },
+  {
+    "category": "Широкоформатная печать",
+    "items": [
+      { "name": "Печать флагов, вымпелов, знамен в Минске", "url": "/services/flagi" },
+      { "name": "Печать баннеров", "url": "/services/bannery", "code": "banner" },
+      { "name": "Рекламные баннеры-растяжки", "url": "/services/reklamnye-bannery-rastyazhki" },
+      { "name": "Строительная сетка для ограждения", "url": "/services/setka" },
+      { "name": "Пресс волл (press wall), брендволл, пресс стена, фоны, декорации", "url": "/services/fonyi-pressvolyi" }
+    ]
+  },
+  {
+    "category": "Оформление выставок",
+    "items": [
+      { "name": "Спецпредложение «Выставка под ключ»", "url": "/services/expo-komplex" },
+      { "name": "Мобильные выставочные конструкции для стендов", "url": "/services/mobilnye-expo-konstrukcii" },
+      { "name": "Дизайн и проектирование выставочных стендов", "url": "/services/dizajn-expo-stendov" },
+      { "name": "Оформление и оклейка выставочных стендов графикой", "url": "/services/oformlenie-expo-stendov" }
+    ]
+  },
+  {
+    "category": "Печать и изготовление календарей",
+    "items": [
+      { "name": "Настольные календари-домики", "url": "/services/nastolnye-kalendari-domiki" },
+      { "name": "Настенные перекидные календари", "url": "/services/perekidnye-nastennye-kalendari" },
+      { "name": "Квартальные календари", "url": "/services/kvartalnye-kalendari" },
+      { "name": "Карманные календари", "url": "/services/karmannye-kalendari" }
+    ]
+  },
+  {
+    "category": "Декор интерьера",
+    "items": [
+      { "name": "Изготовление фотообоев на заказ", "url": "/services/fotooboi" },
+      { "name": "Матирование стекла пленкой с эффектом «иней»", "url": "/services/matirovanie-stekol" },
+      { "name": "Печать на холсте репродукций картин и фотографий", "url": "/services/pechat-na-xolste" },
+      { "name": "Печать фотографий большого формата", "url": "/services/fotografii" },
+      { "name": "Декоративные наклейки на стены и мебель, стикеры на холодильник", "url": "/services/naklejki-na-stenyi-i-mebel" },
+      { "name": "Трафареты для декора", "url": "/services/trafaretyi-dlya-okraski-sten" },
+      { "name": "Печать постеров и плакатов большого формата", "url": "/services/posteryi-i-plakatyi" },
+      { "name": "Скинали для кухни", "url": "/services/skinali" }
+    ]
+  },
+  {
+    "category": "Оформление мест продаж",
+    "items": [
+      { "name": "Комплексное оформление магазина, рекламное оформление торгового зала", "url": "/services/kompleksnoe-oformlenie-mest-prodazh" },
+      { "name": "Информационные и рекламные указатели, навигация в торговом зале", "url": "/services/reklamnyie-ukazateli" },
+      { "name": "Pos материалы", "url": "/services/pos-materialy" },
+      { "name": "Подставки под товары из оргстекла", "url": "/services/podstavki-tovary" },
+      { "name": "Подставки под полиграфическую продукцию из оргстекла", "url": "/services/podstavki-pod-poligraficheskuyu-produkcziyu-iz-orgstekla" },
+      { "name": "Ценникодержатели из пластика и оргстекла", "url": "/services/czennikoderzhateli-iz-plastika-i-orgstekla" },
+      { "name": "Рекламные воблеры", "url": "/services/reklamnye-voblery" },
+      { "name": "Печать шелфтокеров", "url": "/services/pechat-shelftokerov" },
+      { "name": "Хенгеры, изготовление и печать хенгеров", "url": "/services/hengery-izgotovlenie-i-pechat-hengerov" },
+      { "name": "Ростовые фигуры, хардпостеры, тантамарески", "url": "/services/rostovye-figury-hardpostery-tantamareski" },
+      { "name": "Изготовление муляжей продуктов и объемных макетов", "url": "/services/mulyazhi-produktov" },
+      { "name": "Изготовление рекламных мобайлов", "url": "/services/izgotovlenie-reklamnyh-mobajlov" },
+      { "name": "Изготовление стопперов в Минске", "url": "/services/reklamnye-stoppery" },
+      { "name": "Акрилайтовые панели, изготовление акрилайтов", "url": "/services/akrilovye-paneli" },
+      { "name": "Гардеробные номерки, бирки и номерки для ключей", "url": "/services/garderobnye-nomerki-birki-i-nomerki-dlya-klyuchej" },
+      { "name": "Торговая атрибутика из пластика", "url": "/services/izgotovlenie-torgovoj-atributiki" }
+    ]
+  },
+  {
+    "category": "Мобильное рекламное оборудование",
+    "items": [
+      { "name": "Мобильные баннерные стенды", "url": "/services/mobilnye-stendy" },
+      { "name": "Изготовление промо-стоек и промо-столов", "url": "/services/promo-stojki" },
+      { "name": "Fold-up (Фолд-ап) стенды-ширмы", "url": "/services/fold-up" },
+      { "name": "Металлические складные буклетницы и стойки для брошюр", "url": "/services/bukletnicy" },
+      { "name": "Roll up (Ролл ап) стенды", "url": "/services/roll-ap-stendy", "code": "rollup" },
+      { "name": "Pop up стенды (Поп Ап Системы)", "url": "/services/pop-up-stendy" }
+    ]
+  },
+  {
+    "category": "Навигация",
+    "items": [
+      { "name": "Информационные стенды", "url": "/services/informaczionnye-stendy" },
+      { "name": "Офисные таблички и указатели", "url": "/services/ofisnyie-tablichki" }
+    ]
+  },
+  {
+    "category": "Одежда и текстиль",
+    "items": [
+      { "name": "Печать на ткани", "url": "/services/pechat-na-tkani-i-sumkah" }
+    ]
+  },
+  {
+    "category": "Реклама на транспорте",
+    "items": [
+      { "name": "Наклейки на автомобиль", "url": "/services/naklejki-na-avto" }
+    ]
+  }
+]

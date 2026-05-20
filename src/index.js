@@ -19,10 +19,13 @@ const TELEGRAM_SECRET_TOKEN = process.env.TELEGRAM_SECRET_TOKEN || '';
 const BOT_ASSISTANT_NAME = process.env.BOT_ASSISTANT_NAME || 'Арина';
 const SALES_MANAGER_NAME = process.env.SALES_MANAGER_NAME || 'Екатерина';
 const FIRST_ORDER_DISCOUNT = Number(process.env.FIRST_ORDER_DISCOUNT || 5);
+const WEBSITE_BASE_URL = 'https://comint.onrender.com';
+const DEFAULT_PRICE_NOTE = 'На сайте Comint числовые цены не опубликованы. Стоимость рассчитывается индивидуально после уточнения тиража, размеров, материала, макета и сроков.';
 
 const CANCEL_TEXTS = ['отмена', 'отменить', 'отменить заявку', '❌ отменить заявку', '/cancel'];
 const SERVICES_TEXTS = ['услуги', '📋 услуги', 'каталог', 'каталог услуг', '/services'];
 const STATUS_TEXTS = ['статус', 'статус заявки', '🔎 статус заявки', '/status'];
+const PRICE_TEXTS = ['цены', '💰 цены', 'стоимость', 'сколько стоит', 'прайс', 'прайс-лист', 'прайс лист', 'прайс-листы', 'прайс листы', '/price', '/prices'];
 
 const POLYGRAPHY_PRODUCTS = {
   'визитки': { serviceCode: 'business_cards', label: 'Визитки' },
@@ -42,6 +45,39 @@ const SOUVENIR_EVENTS = {
   'подарок сотруднику': 'Подарок сотруднику',
   'подарок для партнера': 'Подарок для партнера',
   'промо-раздача': 'Промо-раздача на мероприятии'
+};
+
+const CATEGORY_QUESTIONS = {
+  'Полиграфия': [
+    { key: 'product_details', label: 'Что изготовить', prompt: 'Что именно нужно изготовить? Укажите формат, если знаете.' },
+    { key: 'quantity', label: 'Тираж', prompt: 'Укажите тираж.\n\nПример: 100, 500 или 1000 шт.' },
+    { key: 'paper', label: 'Материал', prompt: 'Материал или бумага известны? Если нет — напишите «не знаю».' },
+    { key: 'deadline', label: 'Срок', prompt: 'К какому сроку нужен заказ?' }
+  ],
+  'Сувенирная продукция': [
+    { key: 'item', label: 'Предмет', prompt: 'На какой продукции нужно нанести логотип? Например: кружки, ручки, пакеты, флешки или другое.' },
+    { key: 'quantity', label: 'Количество', prompt: 'Укажите количество.' },
+    { key: 'print_details', label: 'Нанесение', prompt: 'Нанесение нужно с одной стороны или с двух? Сколько цветов в логотипе?' },
+    { key: 'deadline', label: 'Срок', prompt: 'К какому сроку нужен заказ?' }
+  ],
+  'Наружная реклама': [
+    { key: 'construction_type', label: 'Тип конструкции', prompt: 'Что нужно изготовить: вывеска, световой короб, табличка, штендер, витрина или другое?' },
+    { key: 'size_text', label: 'Размер', prompt: 'Укажите примерный размер.' },
+    { key: 'mounting', label: 'Монтаж', prompt: 'Нужен монтаж? Если да — укажите адрес или город установки.' },
+    { key: 'deadline', label: 'Срок', prompt: 'К какому сроку нужен заказ?' }
+  ],
+  'Широкоформатная печать': [
+    { key: 'size_text', label: 'Размер', prompt: 'Укажите размер изделия.\n\nПример: 2×3 м или A1.' },
+    { key: 'quantity', label: 'Количество', prompt: 'Укажите количество.' },
+    { key: 'material', label: 'Материал', prompt: 'Материал известен? Например: баннер, пленка, сетка, бумага. Если нет — напишите «не знаю».' },
+    { key: 'deadline', label: 'Срок', prompt: 'К какому сроку нужен заказ?' }
+  ],
+  default: [
+    { key: 'details', label: 'Задача', prompt: 'Опишите задачу: что нужно изготовить и для чего будет использоваться.' },
+    { key: 'quantity', label: 'Количество', prompt: 'Укажите количество или тираж.' },
+    { key: 'size_text', label: 'Размер', prompt: 'Укажите размер, если он известен. Если нет — напишите «не знаю».' },
+    { key: 'deadline', label: 'Срок', prompt: 'К какому сроку нужен заказ?' }
+  ]
 };
 
 if (!BOT_TOKEN) {
@@ -228,6 +264,11 @@ async function handleClientMessage(msg) {
     return;
   }
 
+  if (isPriceRequest(text)) {
+    await sendPrices(chatId);
+    return;
+  }
+
   if (isStatusRequest(text)) {
     await sendClientStatus(chatId);
     return;
@@ -362,6 +403,7 @@ async function sendHelp(chatId) {
       '',
       'Команды:',
       '/services — список услуг',
+      '/prices — как рассчитывается стоимость',
       '/status — статус последней заявки',
       '/manager — позвать менеджера',
       '/cancel — отменить текущую заявку',
@@ -376,16 +418,37 @@ async function sendHelp(chatId) {
 }
 
 async function sendServices(chatId) {
-  const services = await readJson('services.json', []);
+  const services = await loadServices();
+  const groups = groupServicesByCategory(services);
   const lines = [
-    'Вот с чем я уже умею работать:',
+    `Каталог услуг ${COMPANY_NAME} с сайта:`,
     '',
-    ...services.map((service) => `— ${service.name}`),
+    ...groups.map(([category, items]) => {
+      const examples = items.slice(0, 4).map((service) => service.name).join(', ');
+      const tail = items.length > 4 ? ' и другие' : '';
+      return `— ${category}: ${examples}${tail}.`;
+    }),
     '',
-    'Выберите услугу кнопкой ниже или напишите задачу своими словами.'
+    `Всего направлений: ${groups.length}, услуг: ${services.length}.`,
+    '',
+    'Напишите название услуги или задачу своими словами — я подберу сценарий заявки.'
   ];
 
   await sendMessage(chatId, lines.join('\n'), mainKeyboard());
+}
+
+async function sendPrices(chatId) {
+  await sendMessage(
+    chatId,
+    [
+      `Проверил сайт ${WEBSITE_BASE_URL}: числовой прайс там не опубликован.`,
+      '',
+      'Для услуг Comint стоимость зависит от тиража, размера, материала, макета, обработки и сроков. Поэтому бот не показывает неподтверждённые цифры, а собирает параметры для индивидуального расчёта менеджером.',
+      '',
+      'Напишите, что нужно изготовить, или выберите услугу в каталоге — я задам короткие вопросы и передам заявку на расчёт.'
+    ].join('\n'),
+    mainKeyboard()
+  );
 }
 
 async function startPolygraphyFunnel(msg) {
@@ -395,7 +458,9 @@ async function startPolygraphyFunnel(msg) {
     code: 'polygraphy',
     name: 'Полиграфия',
     category: 'Полиграфия',
-    managerOnly: false
+    managerOnly: false,
+    sourceUrl: `${WEBSITE_BASE_URL}/services#category-print`,
+    priceNote: DEFAULT_PRICE_NOTE
   };
   lead.initialMessage = msg.text || msg.caption || 'Хочу заказать полиграфию';
   lead.sourceFunnel = 'polygraphy';
@@ -450,14 +515,16 @@ async function handlePolygraphyProduct(msg, session) {
     return;
   }
 
-  const services = await readJson('services.json', []);
+  const services = await loadServices();
   const service = services.find((item) => item.code === product.serviceCode);
 
   session.lead.service = {
     code: service?.code || product.serviceCode,
     name: service?.name || product.label,
     category: service?.category || 'Полиграфия',
-    managerOnly: Boolean(service?.managerOnly)
+    managerOnly: Boolean(service?.managerOnly),
+    sourceUrl: service?.sourceUrl || '',
+    priceNote: service?.priceNote || DEFAULT_PRICE_NOTE
   };
   session.serviceCode = service?.code || product.serviceCode;
   setFieldAnswer(session.lead, 'product_type', 'Тип продукции', product.label, text);
@@ -493,7 +560,7 @@ async function handlePolygraphyUrgency(msg, session) {
 
   setFieldAnswer(session.lead, 'urgency', 'Срочность', normalizeUrgency(text), text);
 
-  const services = await readJson('services.json', []);
+  const services = await loadServices();
   const service = services.find((item) => item.code === session.serviceCode) || session.lead.service;
   const calculation = await calculateLead(session.lead, service);
 
@@ -507,9 +574,10 @@ async function handlePolygraphyUrgency(msg, session) {
     msg.chat.id,
     [
       calculation?.clientText || 'По этому заказу лучше сделать индивидуальный просчёт: цена зависит от макета, материала и точных параметров.',
+      !calculation ? formatPriceNote(service) : '',
       '',
       'Можно прикрепить макет, фото примера или техзадание. Если файла пока нет — нажмите «Файла нет».'
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
     fileKeyboard()
   );
 }
@@ -521,7 +589,9 @@ async function startSouvenirFunnel(msg) {
     code: 'souvenir',
     name: 'Сувенирная продукция с логотипом',
     category: 'Сувенирная продукция',
-    managerOnly: true
+    managerOnly: true,
+    sourceUrl: `${WEBSITE_BASE_URL}/services#category-souvenirs`,
+    priceNote: DEFAULT_PRICE_NOTE
   };
   lead.initialMessage = msg.text || msg.caption || 'Нужны сувениры с логотипом';
   lead.sourceFunnel = 'souvenir';
@@ -560,6 +630,8 @@ async function handleSouvenirEvent(msg, session) {
     msg.chat.id,
     [
       `Отлично, подготовим индивидуальный просчёт. Если оставите заявку прямо сейчас, добавим скидку ${FIRST_ORDER_DISCOUNT}% на первый заказ.`,
+      '',
+      formatPriceNote(session.lead.service),
       '',
       'Можно прикрепить логотип, брендбук, фото примера или список желаемых товаров.',
       '',
@@ -655,7 +727,7 @@ async function routeFreeText(msg) {
     return;
   }
 
-  const services = await readJson('services.json', []);
+  const services = await loadServices();
   const match = matchService(text, services);
 
   if (!match.best) {
@@ -700,7 +772,9 @@ async function startServiceFlow(msg, service, initialText = '') {
     code: service.code,
     name: service.name,
     category: service.category,
-    managerOnly: Boolean(service.managerOnly)
+    managerOnly: Boolean(service.managerOnly),
+    sourceUrl: service.sourceUrl || '',
+    priceNote: service.priceNote || DEFAULT_PRICE_NOTE
   };
   lead.initialMessage = initialText;
   lead.fields = lead.fields || {};
@@ -724,6 +798,7 @@ async function startServiceFlow(msg, service, initialText = '') {
       msg.chat.id,
       [
         service.intro || `Понял, оформляем: ${service.name}.`,
+        formatPriceNote(service),
         already ? `\nУже записал из сообщения:\n${already}` : '',
         '',
         formatQuestionPrompt(service, lead, nextQuestion)
@@ -737,7 +812,7 @@ async function startServiceFlow(msg, service, initialText = '') {
 
 async function handleQuestionAnswer(msg, session) {
   const userId = String(msg.from?.id || msg.chat.id);
-  const services = await readJson('services.json', []);
+  const services = await loadServices();
   const service = services.find((item) => item.code === session.serviceCode);
 
   if (!service) {
@@ -779,6 +854,7 @@ async function askForFileOrPhone(chatId, userId, session, service) {
       chatId,
       [
         calculation?.clientText || '',
+        !calculation ? formatPriceNote(service) : '',
         'Теперь можно прикрепить макет, логотип, фото примера или техническое задание.',
         '',
         'Подходящие форматы: jpg, png, jpeg, tiff, tif, pdf, cdr, psd.',
@@ -919,7 +995,7 @@ async function handleNameAnswer(msg, session) {
 }
 
 async function finalizeLead(chatId, userId, session) {
-  const services = await readJson('services.json', []);
+  const services = await loadServices();
   const service = services.find((item) => item.code === session.serviceCode);
 
   if (service) {
@@ -992,6 +1068,12 @@ function formatLeadForManager(lead) {
   lines.push('');
   lines.push(`Услуга: ${lead.service?.name || 'не определена'}`);
   lines.push(`Категория: ${lead.service?.category || 'не определена'}`);
+  if (lead.service?.sourceUrl) {
+    lines.push(`Страница услуги: ${lead.service.sourceUrl}`);
+  }
+  if (lead.service?.priceNote) {
+    lines.push(`Цена на сайте: ${lead.service.priceNote}`);
+  }
 
   if (lead.sourceFunnel) {
     lines.push(`Воронка: ${lead.sourceFunnel}`);
@@ -1182,6 +1264,77 @@ async function resetSession(userId) {
   await writeJson('sessions.json', sessions);
 }
 
+async function loadServices() {
+  const configuredServices = await readJson('services.json', []);
+  const catalog = await readJson('catalog.json', []);
+  const services = configuredServices.map((service) => normalizeService(service));
+
+  for (const categoryBlock of catalog) {
+    const category = categoryBlock.category || 'Другое';
+    for (const item of categoryBlock.items || []) {
+      const code = item.code || makeServiceCode(item.url || item.name);
+      const existing = services.find((service) => service.code === code || normalizeText(service.name) === normalizeText(item.name));
+
+      if (existing) {
+        existing.category = existing.category || category;
+        existing.sourceUrl = existing.sourceUrl || absoluteSiteUrl(item.url);
+        existing.priceNote = existing.priceNote || DEFAULT_PRICE_NOTE;
+        continue;
+      }
+
+      services.push(normalizeService({
+        code,
+        category,
+        name: item.name,
+        sourceUrl: absoluteSiteUrl(item.url),
+        synonyms: item.synonyms || [],
+        intro: `Понял, оформляем: ${item.name}.`,
+        managerOnly: true,
+        askFile: true,
+        calc: { type: 'manager' },
+        priceNote: DEFAULT_PRICE_NOTE
+      }));
+    }
+  }
+
+  return services;
+}
+
+function normalizeService(service) {
+  return {
+    ...service,
+    sourceUrl: service.sourceUrl || '',
+    priceNote: service.priceNote || DEFAULT_PRICE_NOTE
+  };
+}
+
+function absoluteSiteUrl(url = '') {
+  if (!url) return WEBSITE_BASE_URL;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${WEBSITE_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+function makeServiceCode(value = '') {
+  return String(value)
+    .replace(/^https?:\/\/[^/]+/i, '')
+    .replace(/^\/services\//, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .replace(/-+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
+
+function groupServicesByCategory(services) {
+  const grouped = new Map();
+  for (const service of services) {
+    const category = service.category || 'Другое';
+    if (!grouped.has(category)) grouped.set(category, []);
+    grouped.get(category).push(service);
+  }
+
+  return [...grouped.entries()];
+}
+
 async function readJson(fileName, fallback) {
   const filePath = path.join(DATA_DIR, fileName);
   try {
@@ -1288,8 +1441,16 @@ function buildPrefillSummary(lead) {
 }
 
 function getNextQuestion(service, lead) {
-  const questions = service.questions || [];
+  const questions = getServiceQuestions(service);
   return questions.find((question) => lead.fields?.[question.key] === undefined || lead.fields?.[question.key] === '');
+}
+
+function getServiceQuestions(service = {}) {
+  if (Array.isArray(service.questions) && service.questions.length) {
+    return service.questions;
+  }
+
+  return CATEGORY_QUESTIONS[service.category] || CATEGORY_QUESTIONS.default;
 }
 
 function setAnswer(lead, question, rawValue) {
@@ -1309,7 +1470,7 @@ function setAnswer(lead, question, rawValue) {
 }
 
 function formatQuestionPrompt(service, lead, question) {
-  const questions = service.questions || [];
+  const questions = getServiceQuestions(service);
   const currentIndex = questions.findIndex((item) => item.key === question.key);
   const progress = currentIndex >= 0 ? `Вопрос ${currentIndex + 1} из ${questions.length}` : 'Следующий вопрос';
 
@@ -1319,6 +1480,11 @@ function formatQuestionPrompt(service, lead, question) {
     '',
     'Если точного ответа нет, можно написать «не знаю».'
   ].join('\n');
+}
+
+function formatPriceNote(service = {}) {
+  const note = service.priceNote || DEFAULT_PRICE_NOTE;
+  return note ? `Цена: ${note}` : '';
 }
 
 function setFieldAnswer(lead, key, label, value, rawValue) {
@@ -1487,6 +1653,11 @@ function isStatusRequest(text = '') {
   return STATUS_TEXTS.some((phrase) => normalized === normalizeText(phrase));
 }
 
+function isPriceRequest(text = '') {
+  const normalized = normalizeText(text);
+  return PRICE_TEXTS.some((phrase) => normalized === normalizeText(phrase));
+}
+
 function isNoFile(text = '') {
   const normalized = normalizeText(text);
   return ['файла нет', 'нет файла', 'макета нет', 'нет макета', 'без файла', 'продолжить'].some((phrase) => normalized.includes(phrase));
@@ -1631,7 +1802,8 @@ function mainKeyboard() {
       ['Нужны сувениры с логотипом'],
       ['У меня сложный проект, хочу обсудить с менеджером'],
       ['Баннер / широкоформат', 'Наружная реклама'],
-      ['📋 Услуги', '🔎 Статус заявки'],
+      ['📋 Услуги', '💰 Цены'],
+      ['🔎 Статус заявки'],
       ['👨‍💼 Позвать менеджера']
     ],
     resize_keyboard: true,
