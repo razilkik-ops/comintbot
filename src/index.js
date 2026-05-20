@@ -16,10 +16,33 @@ const COMPANY_NAME = process.env.COMPANY_NAME || 'Коминт';
 const MANAGER_CHAT_ID = process.env.MANAGER_CHAT_ID || '';
 const WEBHOOK_PATH_SECRET = process.env.WEBHOOK_PATH_SECRET || 'telegram-webhook';
 const TELEGRAM_SECRET_TOKEN = process.env.TELEGRAM_SECRET_TOKEN || '';
+const BOT_ASSISTANT_NAME = process.env.BOT_ASSISTANT_NAME || 'Арина';
+const SALES_MANAGER_NAME = process.env.SALES_MANAGER_NAME || 'Екатерина';
+const FIRST_ORDER_DISCOUNT = Number(process.env.FIRST_ORDER_DISCOUNT || 5);
 
 const CANCEL_TEXTS = ['отмена', 'отменить', 'отменить заявку', '❌ отменить заявку', '/cancel'];
 const SERVICES_TEXTS = ['услуги', '📋 услуги', 'каталог', 'каталог услуг', '/services'];
 const STATUS_TEXTS = ['статус', 'статус заявки', '🔎 статус заявки', '/status'];
+
+const POLYGRAPHY_PRODUCTS = {
+  'визитки': { serviceCode: 'business_cards', label: 'Визитки' },
+  'буклеты/листовки': { serviceCode: 'flyers', label: 'Буклеты/листовки' },
+  'листовки/флаеры': { serviceCode: 'flyers', label: 'Листовки/флаеры' },
+  'наклейки/этикетки': { serviceCode: 'stickers', label: 'Наклейки/этикетки' }
+};
+
+const SOUVENIR_TYPES = {
+  'подарочные наборы': 'Подарочные наборы',
+  'брендированный текстиль': 'Брендированный текстиль',
+  'кружки и термокружки': 'Кружки и термокружки с логотипом',
+  'ежедневники и органайзеры': 'Ежедневники и органайзеры'
+};
+
+const SOUVENIR_EVENTS = {
+  'подарок сотруднику': 'Подарок сотруднику',
+  'подарок для партнера': 'Подарок для партнера',
+  'промо-раздача': 'Промо-раздача на мероприятии'
+};
 
 if (!BOT_TOKEN) {
   console.error('Ошибка: укажите BOT_TOKEN в .env');
@@ -210,6 +233,21 @@ async function handleClientMessage(msg) {
     return;
   }
 
+  if (isPolygraphyEntry(text)) {
+    await startPolygraphyFunnel(msg);
+    return;
+  }
+
+  if (isSouvenirEntry(text)) {
+    await startSouvenirFunnel(msg);
+    return;
+  }
+
+  if (isComplexProjectEntry(text)) {
+    await startComplexProjectRequest(msg);
+    return;
+  }
+
   if (text === '/manager' || isManagerRequest(text)) {
     await startManagerRequest(msg);
     return;
@@ -222,6 +260,41 @@ async function handleClientMessage(msg) {
   }
 
   const session = await getSession(userId);
+
+  if (session.stage === 'polygraphy_product') {
+    await handlePolygraphyProduct(msg, session);
+    return;
+  }
+
+  if (session.stage === 'polygraphy_custom') {
+    await handlePolygraphyCustom(msg, session);
+    return;
+  }
+
+  if (session.stage === 'polygraphy_quantity') {
+    await handlePolygraphyQuantity(msg, session);
+    return;
+  }
+
+  if (session.stage === 'polygraphy_urgency') {
+    await handlePolygraphyUrgency(msg, session);
+    return;
+  }
+
+  if (session.stage === 'souvenir_type') {
+    await handleSouvenirType(msg, session);
+    return;
+  }
+
+  if (session.stage === 'souvenir_event') {
+    await handleSouvenirEvent(msg, session);
+    return;
+  }
+
+  if (session.stage === 'complex_project_details') {
+    await handleComplexProjectDetails(msg, session);
+    return;
+  }
 
   if (session.stage === 'ask_phone') {
     await handlePhoneAnswer(msg, session);
@@ -261,18 +334,10 @@ async function handleClientMessage(msg) {
 
 async function sendWelcome(chatId) {
   const text = [
-    `Здравствуйте! Я бот компании ${COMPANY_NAME}.`,
+    `Здравствуйте! Меня зовут ${BOT_ASSISTANT_NAME}.`,
+    `Я ваш персональный помощник в типографии «${COMPANY_NAME}». Чем могу быть полезна?`,
     '',
-    'Помогу быстро оформить заявку: подскажу, какие параметры нужны, приму макет и передам всё менеджеру.',
-    '',
-    'Можно написать как человеку:',
-    '— нужен баннер 2 на 3',
-    '— хочу наклейки на банки',
-    '— нужны визитки 200 штук',
-    '— печать на кружках',
-    '— нужна вывеска с подсветкой',
-    '',
-    'Если пока не знаете точные параметры — ничего страшного, разберёмся по шагам.'
+    'Выберите направление, и я задам несколько коротких вопросов. Так менеджер сразу получит уже подготовленную заявку.'
   ].join('\n');
 
   await sendMessage(chatId, text, mainKeyboard());
@@ -294,7 +359,12 @@ async function sendHelp(chatId) {
       '/services — список услуг',
       '/status — статус последней заявки',
       '/manager — позвать менеджера',
-      '/cancel — отменить текущую заявку'
+      '/cancel — отменить текущую заявку',
+      '',
+      'Быстрый старт:',
+      '— Хочу заказать полиграфию',
+      '— Нужны сувениры с логотипом',
+      '— У меня сложный проект'
     ].join('\n'),
     mainKeyboard()
   );
@@ -311,6 +381,230 @@ async function sendServices(chatId) {
   ];
 
   await sendMessage(chatId, lines.join('\n'), mainKeyboard());
+}
+
+async function startPolygraphyFunnel(msg) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const lead = createLead(msg);
+  lead.service = {
+    code: 'polygraphy',
+    name: 'Полиграфия',
+    category: 'Полиграфия',
+    managerOnly: false
+  };
+  lead.initialMessage = msg.text || msg.caption || 'Хочу заказать полиграфию';
+  lead.sourceFunnel = 'polygraphy';
+
+  await saveSession(userId, {
+    stage: 'polygraphy_product',
+    serviceCode: 'polygraphy',
+    lead,
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(
+    msg.chat.id,
+    [
+      'Отлично! Расскажите, что именно вам нужно напечатать?',
+      '',
+      'Если нужного варианта нет, выберите «Другое» и напишите задачу вручную.'
+    ].join('\n'),
+    polygraphyProductKeyboard()
+  );
+}
+
+async function handlePolygraphyProduct(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+  const normalized = normalizeText(text);
+
+  if (normalized.includes('другое')) {
+    session.lead.service = {
+      code: 'custom_polygraphy',
+      name: 'Полиграфия: другой запрос',
+      category: 'Полиграфия',
+      managerOnly: true
+    };
+    setFieldAnswer(session.lead, 'product_type', 'Тип продукции', 'Другое', text);
+    await saveSession(userId, { ...session, stage: 'polygraphy_custom', serviceCode: 'custom_polygraphy' });
+    await sendMessage(
+      msg.chat.id,
+      [
+        'Опишите, пожалуйста, что нужно изготовить.',
+        '',
+        'Можно коротко: формат, тираж, материал, срок и что уже есть по макету.'
+      ].join('\n'),
+      serviceKeyboard()
+    );
+    return;
+  }
+
+  const product = findOption(normalized, POLYGRAPHY_PRODUCTS);
+  if (!product) {
+    await sendMessage(msg.chat.id, 'Выберите вариант кнопкой ниже или нажмите «Другое».', polygraphyProductKeyboard());
+    return;
+  }
+
+  const services = await readJson('services.json', []);
+  const service = services.find((item) => item.code === product.serviceCode);
+
+  session.lead.service = {
+    code: service?.code || product.serviceCode,
+    name: service?.name || product.label,
+    category: service?.category || 'Полиграфия',
+    managerOnly: Boolean(service?.managerOnly)
+  };
+  session.serviceCode = service?.code || product.serviceCode;
+  setFieldAnswer(session.lead, 'product_type', 'Тип продукции', product.label, text);
+
+  await saveSession(userId, { ...session, stage: 'polygraphy_quantity', updatedAt: new Date().toISOString() });
+  await sendMessage(msg.chat.id, 'Какой тираж планируете?', quantityRangeKeyboard());
+}
+
+async function handlePolygraphyCustom(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+
+  session.lead.comments = session.lead.comments || [];
+  session.lead.comments.push({ at: new Date().toISOString(), text: text || 'Клиент выбрал другой запрос по полиграфии' });
+  session.lead.managerReason = 'Нестандартный запрос по полиграфии';
+
+  await saveSession(userId, { ...session, stage: 'ask_phone', updatedAt: new Date().toISOString() });
+  await sendMessage(msg.chat.id, managerHandoffText(), contactKeyboard());
+}
+
+async function handlePolygraphyQuantity(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+
+  setFieldAnswer(session.lead, 'quantity_range', 'Тираж', normalizeQuantityRange(text), text);
+  await saveSession(userId, { ...session, stage: 'polygraphy_urgency', updatedAt: new Date().toISOString() });
+  await sendMessage(msg.chat.id, 'По срокам как удобнее?', urgencyKeyboard());
+}
+
+async function handlePolygraphyUrgency(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+
+  setFieldAnswer(session.lead, 'urgency', 'Срочность', normalizeUrgency(text), text);
+
+  const services = await readJson('services.json', []);
+  const service = services.find((item) => item.code === session.serviceCode) || session.lead.service;
+  const calculation = await calculateLead(session.lead, service);
+
+  if (calculation) {
+    session.lead.priceEstimate = calculation.priceEstimate;
+    session.lead.calculation = calculation;
+  }
+
+  await saveSession(userId, { ...session, stage: 'ask_file', updatedAt: new Date().toISOString() });
+  await sendMessage(
+    msg.chat.id,
+    [
+      calculation?.clientText || 'По этому заказу лучше сделать индивидуальный просчёт: цена зависит от макета, материала и точных параметров.',
+      '',
+      'Можно прикрепить макет, фото примера или техзадание. Если файла пока нет — нажмите «Файла нет».'
+    ].join('\n'),
+    fileKeyboard()
+  );
+}
+
+async function startSouvenirFunnel(msg) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const lead = createLead(msg);
+  lead.service = {
+    code: 'souvenir',
+    name: 'Сувенирная продукция с логотипом',
+    category: 'Сувенирная продукция',
+    managerOnly: true
+  };
+  lead.initialMessage = msg.text || msg.caption || 'Нужны сувениры с логотипом';
+  lead.sourceFunnel = 'souvenir';
+  lead.discountOffer = FIRST_ORDER_DISCOUNT ? `${FIRST_ORDER_DISCOUNT}% на первый заказ` : '';
+
+  await saveSession(userId, {
+    stage: 'souvenir_type',
+    serviceCode: 'souvenir',
+    lead,
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(msg.chat.id, 'Выберите тип сувенира, который вас интересует:', souvenirTypeKeyboard());
+}
+
+async function handleSouvenirType(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+  const type = findOption(normalizeText(text), SOUVENIR_TYPES) || text;
+
+  setFieldAnswer(session.lead, 'souvenir_type', 'Тип сувенира', type, text);
+  await saveSession(userId, { ...session, stage: 'souvenir_event', updatedAt: new Date().toISOString() });
+  await sendMessage(msg.chat.id, 'Для какого события вам нужны сувениры?', souvenirEventKeyboard());
+}
+
+async function handleSouvenirEvent(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+  const event = findOption(normalizeText(text), SOUVENIR_EVENTS) || text;
+
+  setFieldAnswer(session.lead, 'souvenir_event', 'Событие', event, text);
+  session.lead.managerReason = 'Сувенирная продукция требует индивидуального подбора';
+
+  await saveSession(userId, { ...session, stage: 'ask_file', updatedAt: new Date().toISOString() });
+  await sendMessage(
+    msg.chat.id,
+    [
+      `Отлично, подготовим индивидуальный просчёт. Если оставите заявку прямо сейчас, добавим скидку ${FIRST_ORDER_DISCOUNT}% на первый заказ.`,
+      '',
+      'Можно прикрепить логотип, брендбук, фото примера или список желаемых товаров.',
+      '',
+      'Если файла нет — нажмите «Файла нет».'
+    ].join('\n'),
+    fileKeyboard()
+  );
+}
+
+async function startComplexProjectRequest(msg) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const lead = createLead(msg);
+  lead.service = {
+    code: 'complex_project',
+    name: 'Сложный проект',
+    category: 'Индивидуальный запрос',
+    managerOnly: true
+  };
+  lead.initialMessage = msg.text || msg.caption || 'Сложный проект, хочу обсудить с менеджером';
+  lead.managerReason = 'Клиент выбрал сложный проект';
+
+  await saveSession(userId, {
+    stage: 'complex_project_details',
+    serviceCode: 'complex_project',
+    lead,
+    updatedAt: new Date().toISOString()
+  });
+
+  await sendMessage(
+    msg.chat.id,
+    [
+      'Поняла, здесь лучше не гадать и сразу подключить специалиста.',
+      '',
+      'Опишите задачу в двух-трёх словах: что нужно сделать, тираж/размер, сроки и есть ли макет.'
+    ].join('\n'),
+    serviceKeyboard()
+  );
+}
+
+async function handleComplexProjectDetails(msg, session) {
+  const userId = String(msg.from?.id || msg.chat.id);
+  const text = (msg.text || msg.caption || '').trim();
+
+  if (text) {
+    session.lead.comments = session.lead.comments || [];
+    session.lead.comments.push({ at: new Date().toISOString(), text });
+  }
+
+  await saveSession(userId, { ...session, stage: 'ask_phone', updatedAt: new Date().toISOString() });
+  await sendMessage(msg.chat.id, managerHandoffText(), contactKeyboard());
 }
 
 async function sendClientStatus(chatId) {
@@ -545,17 +839,7 @@ async function startManagerRequest(msg) {
   };
 
   await saveSession(userId, session);
-  await sendMessage(
-    msg.chat.id,
-    [
-      'Хорошо, подключим менеджера.',
-      '',
-      'Оставьте номер телефона. Можно сразу в этом же сообщении написать пару слов о задаче.',
-      '',
-      'Пример: +375 29 123-45-67, нужна вывеска на фасад'
-    ].join('\n'),
-    contactKeyboard()
-  );
+  await sendMessage(msg.chat.id, managerHandoffText(), contactKeyboard());
 }
 
 async function handlePhoneAnswer(msg, session) {
@@ -663,6 +947,18 @@ function formatLeadForManager(lead) {
   lines.push(`Услуга: ${lead.service?.name || 'не определена'}`);
   lines.push(`Категория: ${lead.service?.category || 'не определена'}`);
 
+  if (lead.sourceFunnel) {
+    lines.push(`Воронка: ${lead.sourceFunnel}`);
+  }
+
+  if (lead.managerReason) {
+    lines.push(`Причина передачи: ${lead.managerReason}`);
+  }
+
+  if (lead.discountOffer) {
+    lines.push(`Бонус: ${lead.discountOffer}`);
+  }
+
   if (lead.initialMessage) {
     lines.push('');
     lines.push(`Первое сообщение: ${lead.initialMessage}`);
@@ -731,6 +1027,40 @@ async function calculateLead(lead, service) {
       priceEstimate: `${amount} ${currency}`,
       clientText: `Площадь: ${area} м².\nПредварительная стоимость: ${amount} ${currency}.\n\nТочная цена зависит от материала, обработки, срочности и макета.`,
       details: `${width} × ${height} м = ${area} м²; ${pricePerM2} ${currency}/м²; итого ${amount} ${currency}`
+    };
+  }
+
+  if (service.calc.type === 'tiered_quantity') {
+    const priceRule = prices.prices?.[service.calc.priceKey];
+    const tiers = priceRule?.tiers || {};
+    const quantityRange = String(lead.fields?.quantity_range || '');
+    const urgency = String(lead.fields?.urgency || '');
+    const tier = tiers[quantityRange];
+
+    if (!tier) {
+      return null;
+    }
+
+    const baseAmount = Number(tier.value || 0);
+    if (!baseAmount) {
+      return null;
+    }
+
+    const urgentMultiplier = urgency === 'urgent' ? Number(priceRule.urgentMultiplier || 1.25) : 1;
+    const amount = roundMoney(baseAmount * urgentMultiplier);
+    const urgencyText = urgency === 'urgent' ? `Срочность: применён коэффициент ${urgentMultiplier}.` : 'Срок: обычный заказ.';
+    const discountText = lead.discountOffer ? `\nПри подтверждении заявки действует бонус: ${lead.discountOffer}.` : '';
+
+    return {
+      type: 'tiered_quantity',
+      priceEstimate: `от ${amount} ${currency}`,
+      clientText: [
+        `Предварительная стоимость: от ${amount} ${currency}.`,
+        urgencyText,
+        'Точная цена зависит от бумаги, цветности, постпечатной обработки и макета.',
+        discountText
+      ].filter(Boolean).join('\n'),
+      details: `${lead.service?.name || service.name}; тираж: ${tier.label || quantityRange}; база: ${baseAmount} ${currency}; срочность: ${urgency || 'standard'}; итого от ${amount} ${currency}`
     };
   }
 
@@ -1066,6 +1396,36 @@ function isManagerRequest(text = '') {
   return phrases.some((phrase) => normalized.includes(phrase));
 }
 
+function isPolygraphyEntry(text = '') {
+  const normalized = normalizeText(text);
+  return [
+    'хочу заказать полиграфию',
+    'полиграфия',
+    'заказать полиграфию'
+  ].some((phrase) => normalized === phrase || normalized.includes(phrase));
+}
+
+function isSouvenirEntry(text = '') {
+  const normalized = normalizeText(text);
+  return [
+    'нужны сувениры с логотипом',
+    'сувениры с логотипом',
+    'сувениры',
+    'сувенирка',
+    'подарочные наборы'
+  ].some((phrase) => normalized === phrase || normalized.includes(phrase));
+}
+
+function isComplexProjectEntry(text = '') {
+  const normalized = normalizeText(text);
+  return [
+    'у меня сложный проект хочу обсудить с менеджером',
+    'сложный проект',
+    'обсудить с менеджером',
+    'индивидуальный проект'
+  ].some((phrase) => normalized === phrase || normalized.includes(phrase));
+}
+
 function isCancelRequest(text = '') {
   const normalized = normalizeText(text);
   return CANCEL_TEXTS.some((phrase) => normalized === normalizeText(phrase));
@@ -1160,6 +1520,52 @@ function phoneRequestText() {
   ].join('\n');
 }
 
+function managerHandoffText() {
+  return [
+    'Спасибо за подробности. Этот запрос требует индивидуального подхода.',
+    '',
+    `Пожалуйста, оставьте контактные данные, и наш специалист ${SALES_MANAGER_NAME} свяжется с вами в ближайшее время и подготовит лучшее предложение.`,
+    '',
+    'Можно нажать «Отправить телефон» или написать номер вручную.'
+  ].join('\n');
+}
+
+function findOption(normalizedText, options) {
+  if (!normalizedText) return null;
+
+  const entry = Object.entries(options).find(([key]) => {
+    const normalizedKey = normalizeText(key);
+    return normalizedText === normalizedKey || normalizedText.includes(normalizedKey) || normalizedKey.includes(normalizedText);
+  });
+
+  return entry?.[1] || null;
+}
+
+function normalizeQuantityRange(text = '') {
+  const normalized = normalizeText(text);
+
+  if (normalized.includes('до 100')) return 'up_to_100';
+  if (normalized.includes('100') && normalized.includes('500')) return '100_500';
+  if (normalized.includes('500') && normalized.includes('1000')) return '500_1000';
+  if (normalized.includes('свыше') || normalized.includes('больше') || normalized.includes('1000')) return 'over_1000';
+
+  const quantity = parseQuantity(normalized) || parseInt(normalized.replace(/\D+/g, ''), 10);
+  if (!quantity) return normalized || 'unknown';
+  if (quantity <= 100) return 'up_to_100';
+  if (quantity <= 500) return '100_500';
+  if (quantity <= 1000) return '500_1000';
+  return 'over_1000';
+}
+
+function normalizeUrgency(text = '') {
+  const normalized = normalizeText(text);
+  if (normalized.includes('срочно') || normalized.includes('завтра') || normalized.includes('сегодня')) {
+    return 'urgent';
+  }
+
+  return 'standard';
+}
+
 function formatDate(value) {
   try {
     return new Intl.DateTimeFormat('ru-RU', {
@@ -1175,11 +1581,80 @@ function formatDate(value) {
 function mainKeyboard() {
   return {
     keyboard: [
-      ['Баннер / широкоформат', 'Наклейки / этикетки'],
-      ['Визитки / полиграфия', 'Листовки / флаеры'],
-      ['Сувенирка', 'Наружная реклама'],
-      ['Roll-up / стенд', '📋 Услуги'],
-      ['🔎 Статус заявки', '👨‍💼 Позвать менеджера']
+      ['Хочу заказать полиграфию'],
+      ['Нужны сувениры с логотипом'],
+      ['У меня сложный проект, хочу обсудить с менеджером'],
+      ['Баннер / широкоформат', 'Наружная реклама'],
+      ['📋 Услуги', '🔎 Статус заявки'],
+      ['👨‍💼 Позвать менеджера']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function polygraphyProductKeyboard() {
+  return {
+    keyboard: [
+      ['Визитки', 'Буклеты/листовки'],
+      ['Наклейки/этикетки', 'Другое'],
+      ['👨‍💼 Позвать менеджера'],
+      ['🏠 Главное меню']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function quantityRangeKeyboard() {
+  return {
+    keyboard: [
+      ['До 100 шт', '100-500 шт'],
+      ['500-1000 шт', 'Свыше 1000 шт'],
+      ['👨‍💼 Позвать менеджера'],
+      ['❌ Отменить заявку']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function urgencyKeyboard() {
+  return {
+    keyboard: [
+      ['Обычный заказ'],
+      ['Срочно, нужно завтра'],
+      ['👨‍💼 Позвать менеджера'],
+      ['❌ Отменить заявку']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function souvenirTypeKeyboard() {
+  return {
+    keyboard: [
+      ['Подарочные наборы'],
+      ['Брендированный текстиль'],
+      ['Кружки и термокружки'],
+      ['Ежедневники и органайзеры'],
+      ['👨‍💼 Позвать менеджера'],
+      ['🏠 Главное меню']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
+
+function souvenirEventKeyboard() {
+  return {
+    keyboard: [
+      ['Подарок сотруднику'],
+      ['Подарок для партнера'],
+      ['Промо-раздача'],
+      ['👨‍💼 Позвать менеджера'],
+      ['❌ Отменить заявку']
     ],
     resize_keyboard: true,
     one_time_keyboard: false
