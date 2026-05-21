@@ -242,7 +242,7 @@ async function handleClientMessage(msg) {
   const text = (msg.text || msg.caption || '').trim();
   const userId = String(msg.from?.id || chatId);
 
-  if (text === '/start' || text === '🏠 Главное меню') {
+  if (isStartRequest(text)) {
     await resetSession(userId);
     await sendWelcome(chatId);
     return;
@@ -268,6 +268,11 @@ async function handleClientMessage(msg) {
   }
 
   const session = await getSession(userId);
+
+  if (session.stage === 'idle' && isGreetingRequest(text)) {
+    await sendWelcome(chatId);
+    return;
+  }
 
   if (isBackRequest(text)) {
     await handleBack(msg, session);
@@ -413,10 +418,10 @@ async function handleClientMessage(msg) {
 
 async function sendWelcome(chatId) {
   const text = [
-    `Здравствуйте! Вы в типографии «${COMPANY_NAME}».`,
-    'Чем можем быть полезны?',
+    `Здравствуйте! Я бот типографии «${COMPANY_NAME}».`,
+    'Помогу выбрать услугу, уточню параметры заказа и передам заявку менеджеру.',
     '',
-    'Выберите направление, и я задам несколько коротких вопросов. Так менеджер сразу получит уже подготовленную заявку.'
+    'Можно сразу написать задачу обычными словами, например: «визитки 3 комплекта» или «нужен баннер 2 на 3». Также можно выбрать направление кнопкой ниже.'
   ].join('\n');
 
   await sendMessage(chatId, text, mainKeyboard());
@@ -568,12 +573,14 @@ async function handleBack(msg, session) {
   }
 
   if (session.stage === 'polygraphy_custom') {
+    const services = await loadServices();
     await saveSession(userId, { ...session, stage: 'polygraphy_product', updatedAt: new Date().toISOString() });
-    await sendMessage(chatId, 'Выберите тип полиграфии:', polygraphyProductKeyboard());
+    await sendMessage(chatId, 'Выберите тип полиграфии:', polygraphyProductKeyboard(getPolygraphyMenuServices(services)));
     return;
   }
 
   if (session.stage === 'polygraphy_quantity') {
+    const services = await loadServices();
     removeFieldAnswer(session.lead, 'product_type');
     session.lead.service = {
       code: 'polygraphy',
@@ -584,7 +591,7 @@ async function handleBack(msg, session) {
       priceNote: DEFAULT_PRICE_NOTE
     };
     await saveSession(userId, { ...session, stage: 'polygraphy_product', serviceCode: 'polygraphy', updatedAt: new Date().toISOString() });
-    await sendMessage(chatId, 'Выберите тип полиграфии:', polygraphyProductKeyboard());
+    await sendMessage(chatId, 'Выберите тип полиграфии:', polygraphyProductKeyboard(getPolygraphyMenuServices(services)));
     return;
   }
 
@@ -790,6 +797,8 @@ async function handlePriceService(msg, session) {
 
 async function startPolygraphyFunnel(msg) {
   const userId = String(msg.from?.id || msg.chat.id);
+  const services = await loadServices();
+  const polygraphyServices = getPolygraphyMenuServices(services);
   const lead = createLead(msg);
   lead.service = {
     code: 'polygraphy',
@@ -816,7 +825,7 @@ async function startPolygraphyFunnel(msg) {
       '',
       'Если нужного варианта нет, выберите «Другое» и напишите задачу вручную.'
     ].join('\n'),
-    polygraphyProductKeyboard()
+    polygraphyProductKeyboard(polygraphyServices)
   );
 }
 
@@ -846,13 +855,27 @@ async function handlePolygraphyProduct(msg, session) {
     return;
   }
 
-  const product = findOption(normalized, POLYGRAPHY_PRODUCTS);
-  if (!product) {
-    await sendMessage(msg.chat.id, 'Выберите вариант кнопкой ниже или нажмите «Другое».', polygraphyProductKeyboard());
+  const services = await loadServices();
+  const polygraphyServices = getPolygraphyMenuServices(services);
+  const exactService = polygraphyServices.find((item) => normalizeText(item.name) === normalized);
+
+  if (exactService) {
+    await startServiceFlow(msg, exactService, text);
     return;
   }
 
-  const services = await loadServices();
+  const matchedService = matchService(text, polygraphyServices);
+  if (matchedService.best) {
+    await startServiceFlow(msg, matchedService.best.service, text);
+    return;
+  }
+
+  const product = findOption(normalized, POLYGRAPHY_PRODUCTS);
+  if (!product) {
+    await sendMessage(msg.chat.id, 'Выберите услугу кнопкой ниже или нажмите «Другое».', polygraphyProductKeyboard(polygraphyServices));
+    return;
+  }
+
   const service = services.find((item) => item.code === product.serviceCode);
 
   if (service) {
@@ -1877,6 +1900,18 @@ function groupServicesByCategory(services) {
   return [...grouped.entries()];
 }
 
+function getPolygraphyMenuServices(services = []) {
+  const seen = new Set();
+  return services
+    .filter((service) => normalizeText(service.category) === 'полиграфия')
+    .filter((service) => {
+      const key = service.code || normalizeText(service.name);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 async function readJson(fileName, fallback) {
   const filePath = path.join(DATA_DIR, fileName);
   try {
@@ -2234,6 +2269,26 @@ function isComplexProjectEntry(text = '') {
   ].some((phrase) => normalized === phrase || normalized.includes(phrase));
 }
 
+function isStartRequest(text = '') {
+  const normalized = normalizeText(text);
+  return ['/start', '🏠 главное меню', 'главное меню', 'начать', 'старт'].some((phrase) => normalized === normalizeText(phrase));
+}
+
+function isGreetingRequest(text = '') {
+  const normalized = normalizeText(text);
+  return [
+    'привет',
+    'здравствуйте',
+    'здравствуй',
+    'добрый день',
+    'доброе утро',
+    'добрый вечер',
+    'хай',
+    'hello',
+    'hi'
+  ].some((phrase) => normalized === phrase || normalized === normalizeText(phrase));
+}
+
 function isCancelRequest(text = '') {
   const normalized = normalizeText(text);
   return CANCEL_TEXTS.some((phrase) => normalized === normalizeText(phrase));
@@ -2439,17 +2494,23 @@ function catalogServiceKeyboard(services) {
   };
 }
 
-function polygraphyProductKeyboard() {
+function polygraphyProductKeyboard(services = []) {
+  const rows = services.length
+    ? services.map((service) => [service.name])
+    : [
+        ['Визитки', 'Буклеты A4'],
+        ['Листовка A4 1 сторона', 'Листовка A4 2 стороны'],
+        ['Бейджи A6', 'Бланки A4'],
+        ['Папки A4', 'Сертификаты A4'],
+        ['Наклейки/этикетки']
+      ];
+
+  rows.push(['Другое']);
+  rows.push(['👨‍💼 Позвать менеджера']);
+  rows.push(['⬅️ Назад', '🏠 Главное меню']);
+
   return {
-    keyboard: [
-      ['Визитки', 'Буклеты A4'],
-      ['Листовка A4 1 сторона', 'Листовка A4 2 стороны'],
-      ['Бейджи A6', 'Бланки A4'],
-      ['Папки A4', 'Сертификаты A4'],
-      ['Наклейки/этикетки', 'Другое'],
-      ['👨‍💼 Позвать менеджера'],
-      ['⬅️ Назад', '🏠 Главное меню']
-    ],
+    keyboard: rows,
     resize_keyboard: true,
     one_time_keyboard: false
   };
