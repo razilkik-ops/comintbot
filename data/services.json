@@ -9,7 +9,7 @@
     "intro": "Понял, нужен баннер или широкоформатная печать.",
     "managerOnly": false,
     "askFile": true,
-    "calc": { "type": "area_m2", "priceKey": "banner_m2" },
+    "calc": { "type": "manager" },
     "questions": [
       { "key": "width_m", "label": "Ширина", "prompt": "Укажите ширину баннера в метрах.\n\nПример: 2" },
       { "key": "height_m", "label": "Высота", "prompt": "Теперь укажите высоту баннера в метрах.\n\nПример: 3" },
@@ -28,7 +28,7 @@
     "intro": "Понял, нужны наклейки, стикеры или этикетки.",
     "managerOnly": false,
     "askFile": true,
-    "calc": { "type": "tiered_quantity", "priceKey": "stickers_standard" },
+    "calc": { "type": "manager" },
     "questions": [
       { "key": "use_place", "label": "Где использовать", "prompt": "Где будут использоваться наклейки: на упаковке, на банках/бутылках, на стекле, на полу, на улице или другое?" },
       { "key": "size_text", "label": "Размер", "prompt": "Укажите размер одной наклейки.\n\nПример: 50×50 мм или 10×10 см" },
@@ -41,19 +41,20 @@
   {
     "code": "business_cards",
     "category": "Полиграфия",
-    "name": "Визитки",
+    "name": "Визитки стандарт",
+    "sourceUrl": "https://comint.onrender.com/services/izgotovlenie-i-pechat-vizitok",
     "synonyms": [
-      "визитки", "визитка", "визиточки", "карточки", "бизнес карточки", "business cards", "карточки с контактами", "печать визиток"
+      "визитки", "визитка", "визиточки", "визитные карточки", "бизнес карточки", "business cards", "карточки с контактами", "печать визиток", "комплект визиток", "стандартные визитки"
     ],
     "intro": "Понял, нужны визитки.",
     "managerOnly": false,
     "askFile": true,
-    "calc": { "type": "tiered_quantity", "priceKey": "business_cards_standard" },
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу: комплект визиток 96 шт.",
     "questions": [
-      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж визиток.\n\nПример: 100, 200, 500 или 1000" },
-      { "key": "sides", "label": "Стороны", "prompt": "Визитки нужны односторонние или двусторонние?" },
-      { "key": "paper", "label": "Бумага", "prompt": "Бумага/плотность известна? Если нет — напишите «стандартная»." },
-      { "key": "lamination", "label": "Ламинация", "prompt": "Нужна ламинация? Матовая, глянцевая или без ламинации?" },
+      { "key": "quantity", "label": "Количество комплектов", "prompt": "Сколько комплектов визиток нужно? Один комплект — 96 шт.\n\nПример: 1, 3 или 5 комплектов." },
+      { "key": "sides", "label": "Стороны", "prompt": "В прайсе указана печать 4+0. Нужна односторонняя печать или другой вариант?" },
+      { "key": "paper", "label": "Бумага", "prompt": "Подходит стандартная мелованная бумага 350 г/м2 или нужен другой материал?" },
       { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны визитки?" }
     ]
   },
@@ -67,7 +68,7 @@
     "intro": "Понял, нужна полиграфия: листовки, флаеры, буклеты или похожая продукция.",
     "managerOnly": false,
     "askFile": true,
-    "calc": { "type": "tiered_quantity", "priceKey": "flyers_standard" },
+    "calc": { "type": "manager" },
     "questions": [
       { "key": "product_type", "label": "Тип продукции", "prompt": "Что именно нужно: листовки, флаеры, буклеты, меню, каталог, брошюра или другое?" },
       { "key": "format", "label": "Формат", "prompt": "Укажите формат: A6, A5, A4, евроформат или другой." },
@@ -78,11 +79,216 @@
     ]
   },
   {
+    "code": "bloknot_a5_budget",
+    "category": "Полиграфия",
+    "name": "Блокнот A5 бюджет",
+    "sourceUrl": "https://comint.onrender.com/services/bloknoty",
+    "synonyms": ["блокнот а5 бюджет", "бюджетный блокнот", "блокноты a5 бюджет", "недорогие блокноты", "блокнот на пружине бюджет", "блокноты с логотипом бюджет"],
+    "intro": "Понял, нужен блокнот A5 бюджет.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на блокнот A5 бюджет.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж блокнотов.\n\nПример: 8, 100 или 500 шт." },
+      { "key": "lamination", "label": "Ламинация", "prompt": "В бюджетном варианте обложка без ламинации. Подходит такой вариант?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны блокноты?" }
+    ]
+  },
+  {
+    "code": "bloknot_a5_standard",
+    "category": "Полиграфия",
+    "name": "Блокнот A5 стандарт",
+    "sourceUrl": "https://comint.onrender.com/services/bloknoty",
+    "synonyms": ["блокнот а5 стандарт", "стандартный блокнот", "блокноты a5 стандарт", "блокнот на пружине", "блокноты с логотипом", "блокноты а5"],
+    "intro": "Понял, нужен блокнот A5 стандарт.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на блокнот A5 стандарт.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж блокнотов.\n\nПример: 8, 100 или 500 шт." },
+      { "key": "lamination", "label": "Ламинация", "prompt": "Ламинация нужна матовая или глянцевая?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны блокноты?" }
+    ]
+  },
+  {
+    "code": "bejdzh",
+    "category": "Полиграфия",
+    "name": "Бейдж A6 стандарт",
+    "sourceUrl": "https://comint.onrender.com/services/bejdzh",
+    "synonyms": ["бейдж", "бейджи", "бэдж", "бэджи", "badge", "бейджики", "именные бейджи", "бейджи a6", "бейдж а6", "карточки для бейджа"],
+    "intro": "Понял, нужны бейджи A6.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на бейдж A6 стандарт.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество бейджей.\n\nПример: 100, 300 или 500 шт." },
+      { "key": "personalization", "label": "Именные", "prompt": "Бейджи будут одинаковые или именные?" },
+      { "key": "hole", "label": "Отверстие", "prompt": "Отверстие нужно круглое или плоское?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны бейджи?" }
+    ]
+  },
+  {
+    "code": "buklet_a4_standard",
+    "category": "Полиграфия",
+    "name": "Буклет A4 стандарт",
+    "sourceUrl": "https://comint.onrender.com/services/buklety",
+    "synonyms": ["буклет", "буклеты", "буклет а4", "буклеты a4", "евробуклет", "рекламный буклет", "буклет с биговкой", "лифтлет", "leaflet"],
+    "intro": "Понял, нужен буклет A4 стандарт.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на буклет A4 стандарт.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж буклетов.\n\nПример: 30, 100 или 500 шт." },
+      { "key": "folding", "label": "Сложение", "prompt": "Какая нужна биговка или сложение? Если не знаете — напишите «стандартная»." },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны буклеты?" }
+    ]
+  },
+  {
+    "code": "pechat_firmennyh_blankov",
+    "category": "Полиграфия",
+    "name": "Бланк A4 фирменный",
+    "sourceUrl": "https://comint.onrender.com/services/pechat-firmennyh-blankov",
+    "synonyms": ["бланк", "бланки", "фирменный бланк", "фирменные бланки", "бланк a4", "бланки a4", "печать бланков", "бланки компании"],
+    "intro": "Понял, нужны фирменные бланки A4.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на фирменный бланк A4.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж бланков.\n\nПример: 100, 300 или 500 шт." },
+      { "key": "paper", "label": "Бумага", "prompt": "Подходит мелованная бумага 115 г/м2 или нужен другой материал?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны бланки?" }
+    ]
+  },
+  {
+    "code": "listovka_a4_one_side",
+    "category": "Полиграфия",
+    "name": "Листовка A4 односторонняя",
+    "sourceUrl": "https://comint.onrender.com/services/pechat-listovok",
+    "synonyms": ["листовка а4", "листовки a4", "односторонняя листовка", "листовка 4+0", "флаер а4 односторонний", "рекламная листовка", "листок а4"],
+    "intro": "Понял, нужна односторонняя листовка A4.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на листовку A4 4+0.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж листовок.\n\nПример: 50, 100 или 500 шт." },
+      { "key": "paper", "label": "Бумага", "prompt": "Подходит мелованная бумага 115 г/м2 или нужен другой материал?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны листовки?" }
+    ]
+  },
+  {
+    "code": "listovka_a4_two_side",
+    "category": "Полиграфия",
+    "name": "Листовка A4 двусторонняя",
+    "sourceUrl": "https://comint.onrender.com/services/pechat-listovok",
+    "synonyms": ["двусторонняя листовка", "листовка 4+4", "листовка а4 2 стороны", "листовки a4 двусторонние", "флаер а4 двусторонний", "листовка с двух сторон"],
+    "intro": "Понял, нужна двусторонняя листовка A4.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на листовку A4 4+4.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж листовок.\n\nПример: 30, 100 или 500 шт." },
+      { "key": "paper", "label": "Бумага", "prompt": "Подходит мелованная бумага 115 г/м2 или нужен другой материал?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны листовки?" }
+    ]
+  },
+  {
+    "code": "papki",
+    "category": "Полиграфия",
+    "name": "Папка A4 с карманом",
+    "sourceUrl": "https://comint.onrender.com/services/papki",
+    "synonyms": ["папка", "папки", "папка a4", "папки a4", "папка с карманом", "папка с клапаном", "фирменная папка", "презентационная папка"],
+    "intro": "Понял, нужна папка A4 с карманом.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на папку A4 с карманом.",
+    "questions": [
+      { "key": "quantity", "label": "Тираж", "prompt": "Укажите тираж папок.\n\nПример: 10, 100 или 500 шт." },
+      { "key": "lamination", "label": "Ламинация", "prompt": "Ламинация нужна матовая или глянцевая?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны папки?" }
+    ]
+  },
+  {
+    "code": "bumazhnyie_paketyi",
+    "category": "Сувенирная продукция",
+    "name": "Пакет A4 бумажный",
+    "sourceUrl": "https://comint.onrender.com/services/bumazhnyie-paketyi",
+    "synonyms": ["пакет a4", "бумажный пакет", "бумажные пакеты", "фирменный пакет", "пакет с логотипом", "пакеты с логотипом", "пакет с люверсами", "подарочный пакет"],
+    "intro": "Понял, нужен бумажный пакет A4.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на бумажный пакет A4.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество пакетов.\n\nПример: 1, 50 или 100 шт." },
+      { "key": "lamination", "label": "Ламинация", "prompt": "Ламинация нужна матовая или глянцевая?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны пакеты?" }
+    ]
+  },
+  {
+    "code": "sertifikaty_diplomy",
+    "category": "Полиграфия",
+    "name": "Сертификат / диплом / благодарность A4",
+    "sourceUrl": "https://comint.onrender.com/services/sertifikaty-diplomy",
+    "synonyms": ["сертификат", "сертификаты", "диплом", "дипломы", "благодарность", "благодарности", "сертификат a4", "диплом a4", "грамота", "грамоты"],
+    "intro": "Понял, нужен сертификат, диплом или благодарность A4.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на сертификат, диплом или благодарность A4.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество.\n\nПример: 20, 100 или 500 шт." },
+      { "key": "personalization", "label": "Именные", "prompt": "Нужно впечатывать имена или все экземпляры одинаковые?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужен заказ?" }
+    ]
+  },
+  {
+    "code": "stikerpak_a6",
+    "category": "Самоклеящаяся продукция",
+    "name": "СтикерПак A6",
+    "sourceUrl": "https://comint.onrender.com/services/naklejki-print",
+    "synonyms": ["стикерпак a6", "стикер пак a6", "стикерпаки a6", "набор стикеров a6", "лист наклеек a6", "стикеры a6", "наклейки a6"],
+    "intro": "Понял, нужен стикерпак A6.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на стикерпак A6.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество стикерпаков.\n\nПример: 80, 300 или 500 шт." },
+      { "key": "shape", "label": "Форма", "prompt": "Нужны простые формы или фигурная резка?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны стикерпаки?" }
+    ]
+  },
+  {
+    "code": "stikerpak_a5",
+    "category": "Самоклеящаяся продукция",
+    "name": "СтикерПак A5",
+    "sourceUrl": "https://comint.onrender.com/services/naklejki-print",
+    "synonyms": ["стикерпак a5", "стикер пак a5", "стикерпаки a5", "набор стикеров a5", "лист наклеек a5", "стикеры a5", "наклейки a5"],
+    "intro": "Понял, нужен стикерпак A5.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на стикерпак A5.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество стикерпаков.\n\nПример: 40, 100 или 300 шт." },
+      { "key": "shape", "label": "Форма", "prompt": "Нужны простые формы или фигурная резка?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны стикерпаки?" }
+    ]
+  },
+  {
     "code": "souvenir",
     "category": "Сувенирная продукция",
     "name": "Сувенирная продукция с логотипом",
     "synonyms": [
-      "сувенирка", "сувенирная продукция", "сувениры с логотипом", "подарочные наборы", "брендированный текстиль", "футболки с логотипом", "худи с логотипом", "кепки с логотипом", "сумки с логотипом", "кружки", "термокружки", "ручки", "ежедневники", "органайзеры", "флешки", "брелоки", "пакеты с логотипом", "печать на кружках", "печать на ручках", "нанесение логотипа", "уф печать", "uv печать", "печать на пластике", "печать на дереве", "печать на металле", "зажигалки", "флешки с логотипом"
+      "сувенирка", "сувенирная продукция", "сувениры с логотипом", "подарочные наборы", "брендированный текстиль", "футболки с логотипом", "худи с логотипом", "кепки с логотипом", "сумки с логотипом", "кружки", "термокружки", "ручки", "ежедневники", "органайзеры", "флешки", "брелоки", "печать на кружках", "печать на ручках", "нанесение логотипа", "уф печать", "uv печать", "печать на пластике", "печать на дереве", "печать на металле", "зажигалки"
     ],
     "intro": "Понял, нужна сувенирная продукция или нанесение логотипа.",
     "managerOnly": true,
@@ -117,19 +323,85 @@
   {
     "code": "rollup",
     "category": "Мобильное рекламное оборудование",
-    "name": "Roll-up / мобильный стенд",
+    "name": "Roll-up 800x2000",
+    "sourceUrl": "https://comint.onrender.com/services/roll-ap-stendy",
     "synonyms": [
-      "роллап", "рол ап", "рол-ап", "roll up", "roll-up", "мобильный стенд", "стенд для выставки", "выставочный стенд", "пресс волл", "press wall", "стенд", "паук", "x баннер"
+      "роллап", "рол ап", "рол-ап", "roll up", "roll-up", "rollup", "ролл ап", "ролл-ап", "ролап 800 2000", "roll up 800x2000", "мобильный стенд", "баннерный стенд"
     ],
-    "intro": "Понял, нужен roll-up или мобильный стенд.",
-    "managerOnly": true,
+    "intro": "Понял, нужен roll-up 800×2000.",
+    "managerOnly": false,
     "askFile": true,
-    "calc": { "type": "manager" },
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на roll-up 800×2000.",
     "questions": [
-      { "key": "stand_type", "label": "Тип стенда", "prompt": "Что именно нужно: roll-up, press wall, X-баннер, выставочный стенд или другое?" },
-      { "key": "size_text", "label": "Размер", "prompt": "Укажите размер, если знаете." },
-      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество." },
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество roll-up.\n\nПример: 1, 3 или 5 шт." },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужен roll-up?" }
+    ]
+  },
+  {
+    "code": "rostovaya_figura_karton",
+    "category": "Оформление мест продаж",
+    "name": "Ростовая фигура, картон",
+    "sourceUrl": "https://comint.onrender.com/services/rostovye-figury-hardpostery-tantamareski",
+    "synonyms": ["ростовая фигура", "ростовые фигуры", "хардпостер", "хардпостеры", "фигура из картона", "картонная ростовая фигура", "tantamareska", "тантамареска"],
+    "intro": "Понял, нужна ростовая фигура из картона.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на ростовую фигуру из картона.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество ростовых фигур.\n\nПример: 1, 3 или 5 шт." },
+      { "key": "size_text", "label": "Размер", "prompt": "Укажите примерный размер фигуры." },
       { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужен заказ?" }
+    ]
+  },
+  {
+    "code": "rostovaya_figura_plastik",
+    "category": "Оформление мест продаж",
+    "name": "Ростовая фигура, пластик",
+    "sourceUrl": "https://comint.onrender.com/services/rostovye-figury-hardpostery-tantamareski",
+    "synonyms": ["ростовая фигура пластик", "ростовые фигуры пластик", "фигура из пластика", "пластиковая ростовая фигура", "хардпостер пластик", "тантамареска пластик"],
+    "intro": "Понял, нужна ростовая фигура из пластика.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на ростовую фигуру из пластика.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество ростовых фигур.\n\nПример: 1, 3 или 5 шт." },
+      { "key": "size_text", "label": "Размер", "prompt": "Укажите примерный размер фигуры." },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужен заказ?" }
+    ]
+  },
+  {
+    "code": "nastolnye_kalendari_domiki",
+    "category": "Печать и изготовление календарей",
+    "name": "Календарь-домик",
+    "sourceUrl": "https://comint.onrender.com/services/nastolnye-kalendari-domiki",
+    "synonyms": ["календарь домик", "календарь-домик", "настольный календарь", "настольные календари", "домик календарь", "перекидной домик"],
+    "intro": "Понял, нужен календарь-домик.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество календарей.\n\nПример: 10, 50 или 100 шт." },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны календари?" }
+    ]
+  },
+  {
+    "code": "kvartalnye_kalendari",
+    "category": "Печать и изготовление календарей",
+    "name": "Календарь квартальный",
+    "sourceUrl": "https://comint.onrender.com/services/kvartalnye-kalendari",
+    "synonyms": ["квартальный календарь", "квартальные календари", "календарь квартальный", "настенный квартальный календарь", "календарь с ригелем", "календарь с пружиной"],
+    "intro": "Понял, нужен квартальный календарь.",
+    "managerOnly": false,
+    "askFile": true,
+    "calc": { "type": "approved_tiered" },
+    "priceNote": "Цена по утвержденному прайсу на квартальный календарь.",
+    "questions": [
+      { "key": "quantity", "label": "Количество", "prompt": "Укажите количество календарей.\n\nПример: 1, 10, 50 или 100 шт." },
+      { "key": "lamination", "label": "Ламинация", "prompt": "Ламинация нужна матовая или глянцевая?" },
+      { "key": "deadline", "label": "Срок", "prompt": "К какому сроку нужны календари?" }
     ]
   }
 ]

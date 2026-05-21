@@ -1,661 +1,223 @@
 {
   "currency": "BYN",
-  "source": "test-data",
-  "comment": "Тестовые цены для проверки сценариев бота. Не являются реальным прайсом Comint.",
+  "source": "approved-price-list",
+  "effective": "Февраль 2025",
+  "comment": "Утвержденные цены на типовые продукты. Если цена в прайсе не указана, стоимость подскажет менеджер.",
   "prices": {
-    "banner_m2": {
-      "value": 25,
-      "unit": "м²",
-      "comment": "Тестовая цена за 1 м² баннера."
+    "bloknot_a5_budget": {
+      "name": "Блокнот A5 бюджет",
+      "unit": "шт",
+      "description": "Обложка верх 350 г/м2 4+0, низ 350 г/м2 без ламинации, внутренний лист 80 г/м2 40 л 6/п, пружина металл по короткому краю.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN",
+      "tiers": [
+        { "label": "от 8 шт", "minQuantity": 8, "priceWithoutVat": 5.25, "priceWithVat": 6.3, "orderMultiple": 4 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 5, "priceWithVat": 6, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 4.6, "priceWithVat": 5.52, "orderMultiple": 1 }
+      ]
     },
-    "business_cards_standard": {
-      "unit": "за тираж",
-      "urgentMultiplier": 1.3,
-      "comment": "Тестовые цены для проверки расчёта визиток.",
-      "tiers": {
-        "up_to_100": {
-          "label": "до 100 шт",
-          "value": 35
-        },
-        "100_500": {
-          "label": "100-500 шт",
-          "value": 60
-        },
-        "500_1000": {
-          "label": "500-1000 шт",
-          "value": 95
-        },
-        "over_1000": {
-          "label": "свыше 1000 шт",
-          "value": 150
-        }
-      }
-    },
-    "flyers_standard": {
-      "unit": "за тираж",
-      "urgentMultiplier": 1.3,
-      "comment": "Тестовые цены для проверки расчёта листовок/буклетов.",
-      "tiers": {
-        "up_to_100": {
-          "label": "до 100 шт",
-          "value": 45
-        },
-        "100_500": {
-          "label": "100-500 шт",
-          "value": 90
-        },
-        "500_1000": {
-          "label": "500-1000 шт",
-          "value": 150
-        },
-        "over_1000": {
-          "label": "свыше 1000 шт",
-          "value": 230
-        }
-      }
-    },
-    "stickers_standard": {
-      "unit": "за тираж",
-      "urgentMultiplier": 1.3,
-      "comment": "Тестовые цены для проверки расчёта наклеек/этикеток.",
-      "tiers": {
-        "up_to_100": {
-          "label": "до 100 шт",
-          "value": 40
-        },
-        "100_500": {
-          "label": "100-500 шт",
-          "value": 85
-        },
-        "500_1000": {
-          "label": "500-1000 шт",
-          "value": 140
-        },
-        "over_1000": {
-          "label": "свыше 1000 шт",
-          "value": 210
-        }
-      }
-    },
-    "akrilovye_paneli": {
-      "value": 145,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Акрилайтовые панели, изготовление акрилайтов. Не является реальным прайсом."
-    },
-    "banner": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Баннер / широкоформатная печать. Не является реальным прайсом."
+    "bloknot_a5_standard": {
+      "name": "Блокнот A5 стандарт",
+      "unit": "шт",
+      "description": "Обложка верх 350 г/м2 4+0, низ 350 г/м2 4+0, ламинация матовая или глянцевая, внутренний лист 80 г/м2 40 л 1+0, пружина металл по короткому краю.",
+      "design": "клиента",
+      "designDevelopment": "20 BYN",
+      "tiers": [
+        { "label": "от 8 шт", "minQuantity": 8, "priceWithoutVat": 7.25, "priceWithVat": 8.7, "orderMultiple": 4 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 6.5, "priceWithVat": 7.8, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 6, "priceWithVat": 7.2, "orderMultiple": 1 }
+      ]
     },
     "bejdzh": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Бейджи. Не является реальным прайсом."
-    },
-    "bloki_dlya_zapisej_kub_bloki": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Блоки для записей. Не является реальным прайсом."
-    },
-    "bloknoty": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Блокноты. Не является реальным прайсом."
-    },
-    "breloki_s_logotipom": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Брелоки с логотипом. Не является реальным прайсом."
-    },
-    "broshury": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Брошюры. Не является реальным прайсом."
-    },
-    "bukletnicy": {
-      "value": 190,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Металлические складные буклетницы и стойки для брошюр. Не является реальным прайсом."
-    },
-    "buklety": {
-      "value": 35,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Буклеты. Не является реальным прайсом."
-    },
-    "bumazhnyie_paketyi": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Фирменные бумажные пакеты с логотипом. Не является реальным прайсом."
-    },
-    "business_cards": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Визитки. Не является реальным прайсом."
-    },
-    "cenniki": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Ценники. Не является реальным прайсом."
-    },
-    "chasy": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Сувенирные настенные часы с логотипом компании. Не является реальным прайсом."
-    },
-    "czennikoderzhateli_iz_plastika_i_orgstekla": {
-      "value": 145,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Ценникодержатели из пластика и оргстекла. Не является реальным прайсом."
-    },
-    "design_poligrafii": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Дизайн полиграфии. Не является реальным прайсом."
-    },
-    "discount": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Дисконтные карты. Не является реальным прайсом."
-    },
-    "dizajn_expo_stendov": {
-      "value": 370,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Дизайн и проектирование выставочных стендов. Не является реальным прайсом."
-    },
-    "eko_sumki": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать на тканевых сумках. Не является реальным прайсом."
-    },
-    "etiketki": {
-      "value": 50,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Самоклеящиеся этикетки. Не является реальным прайсом."
-    },
-    "expo_komplex": {
-      "value": 350,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Спецпредложение «Выставка под ключ». Не является реальным прайсом."
-    },
-    "ezhednevniki": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Ежедневники и планинги. Не является реальным прайсом."
-    },
-    "fasadnye_tablichki": {
-      "value": 180,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление фасадных табличек и информационных указателей. Не является реальным прайсом."
-    },
-    "firmennye_konverty_s_logotipom": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Фирменные конверты с логотипом. Не является реальным прайсом."
-    },
-    "firmennyie_kruzhki": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать на кружках. Не является реальным прайсом."
-    },
-    "flagi": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать флагов, вымпелов, знамен в Минске. Не является реальным прайсом."
-    },
-    "flazhki": {
-      "value": 115,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Тканевые, баннерные и бумажные флажки. Не является реальным прайсом."
-    },
-    "fleshki_s_logotipom": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Флешки с логотипом. Не является реальным прайсом."
-    },
-    "flyers": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Листовки / флаеры / буклеты. Не является реальным прайсом."
-    },
-    "fold_up": {
-      "value": 180,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Fold-up (Фолд-ап) стенды-ширмы. Не является реальным прайсом."
-    },
-    "fonyi_pressvolyi": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Пресс волл (press wall), брендволл, пресс стена, фоны, декорации. Не является реальным прайсом."
-    },
-    "fotografii": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать фотографий большого формата. Не является реальным прайсом."
-    },
-    "fotooboi": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление фотообоев на заказ. Не является реальным прайсом."
-    },
-    "garantijnye_plomby_pechatnye": {
-      "value": 70,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Гарантийные пломбы печатные. Не является реальным прайсом."
-    },
-    "garantijnye_talony": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Гарантийные талоны. Не является реальным прайсом."
-    },
-    "garderobnye_nomerki_birki_i_nomerki_dlya_klyuchej": {
-      "value": 155,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Гардеробные номерки, бирки и номерки для ключей. Не является реальным прайсом."
-    },
-    "hengery_izgotovlenie_i_pechat_hengerov": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Хенгеры, изготовление и печать хенгеров. Не является реальным прайсом."
-    },
-    "informaczionnye_stendy": {
-      "value": 80,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Информационные стенды. Не является реальным прайсом."
-    },
-    "instrukciya": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Инструкции. Не является реальным прайсом."
-    },
-    "izgotovlenie_birok_i_yarlykov": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Бирки и ярлыки. Не является реальным прайсом."
-    },
-    "izgotovlenie_i_pechat_otkrytok": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Открытки. Не является реальным прайсом."
-    },
-    "izgotovlenie_reklamnyh_mobajlov": {
-      "value": 125,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление рекламных мобайлов. Не является реальным прайсом."
-    },
-    "izgotovlenie_torgovoj_atributiki": {
-      "value": 165,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Торговая атрибутика из пластика. Не является реальным прайсом."
-    },
-    "izgotovlenie_znakov_bezopasnosti": {
-      "value": 80,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Знаки безопасности. Не является реальным прайсом."
-    },
-    "karmannye_kalendari": {
-      "value": 90,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Карманные календари. Не является реальным прайсом."
-    },
-    "kartochki_s_telefonom_dlya_mashin": {
-      "value": 35,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Карточки с телефоном для машин. Не является реальным прайсом."
-    },
-    "kartonnye_korobki_i_pakety_dlya_upakovki": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Картонные коробки и пакеты для упаковки. Не является реальным прайсом."
-    },
-    "katalogi": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Каталоги. Не является реальным прайсом."
-    },
-    "kepki": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Кепки с логотипом. Не является реальным прайсом."
-    },
-    "kompleksnoe_oformlenie_mest_prodazh": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Комплексное оформление магазина, рекламное оформление торгового зала. Не является реальным прайсом."
-    },
-    "kovriki_dlya_myishi": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Коврики для мыши. Не является реальным прайсом."
-    },
-    "kvartalnye_kalendari": {
-      "value": 80,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Квартальные календари. Не является реальным прайсом."
-    },
-    "magnityi_blok": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Магниты с блоком для записей. Не является реальным прайсом."
-    },
-    "matirovanie_stekol": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Матирование стекла пленкой с эффектом «иней». Не является реальным прайсом."
-    },
-    "mobilnye_expo_konstrukcii": {
-      "value": 360,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Мобильные выставочные конструкции для стендов. Не является реальным прайсом."
-    },
-    "mobilnye_stendy": {
-      "value": 160,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Мобильные баннерные стенды. Не является реальным прайсом."
-    },
-    "mulyazhi_produktov": {
-      "value": 115,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление муляжей продуктов и объемных макетов. Не является реальным прайсом."
-    },
-    "naklejka_iz_bymagi": {
-      "value": 40,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать наклеек из самоклеящейся бумаги. Не является реальным прайсом."
-    },
-    "naklejki_na_avto": {
-      "value": 70,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Наклейки на автомобиль. Не является реальным прайсом."
-    },
-    "naklejki_na_pol": {
-      "value": 90,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Напольные наклейки. Не является реальным прайсом."
-    },
-    "naklejki_na_stenyi_i_mebel": {
-      "value": 115,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Декоративные наклейки на стены и мебель, стикеры на холодильник. Не является реальным прайсом."
-    },
-    "naklejki_plotter": {
-      "value": 60,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление наклеек на плоттере. Не является реальным прайсом."
-    },
-    "nastolnye_kalendari_domiki": {
-      "value": 60,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Настольные календари-домики. Не является реальным прайсом."
-    },
-    "obemnye_bukvy": {
-      "value": 210,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление световых объемных букв. Не является реальным прайсом."
-    },
-    "ofisnyie_tablichki": {
-      "value": 90,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Офисные таблички и указатели. Не является реальным прайсом."
-    },
-    "oformlenie_expo_stendov": {
-      "value": 380,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Оформление и оклейка выставочных стендов графикой. Не является реальным прайсом."
-    },
-    "oformlenie_naruzhnoj_reklamy": {
-      "value": 250,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Оформление паспорта наружной рекламы. Не является реальным прайсом."
-    },
-    "oformlenie_vitrin_minsk": {
-      "value": 240,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Оформление витрин магазинов, реклама на витринах. Не является реальным прайсом."
-    },
-    "outdoor": {
-      "value": 230,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Наружная реклама / вывеска. Не является реальным прайсом."
-    },
-    "papki": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Папки. Не является реальным прайсом."
-    },
-    "pazlyi": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать логотипов на пазлах. Не является реальным прайсом."
+      "name": "Бейдж A6 стандарт",
+      "unit": "шт",
+      "description": "Бумага 300 г/м2 4+0, ламинация 1+0 глянцевая или матовая, отверстие круглое или плоское.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN + 0,10 BYN за именной бейдж",
+      "tiers": [
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 0.8, "priceWithVat": 0.96, "orderMultiple": 8 },
+        { "label": "от 300 шт", "minQuantity": 300, "priceWithoutVat": 0.6, "priceWithVat": 0.72, "orderMultiple": 12 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 0.5, "priceWithVat": 0.6, "orderMultiple": 1 }
+      ]
+    },
+    "buklet_a4_standard": {
+      "name": "Буклет A4 стандарт",
+      "unit": "шт",
+      "description": "Бумага мелованная 200 г/м2 4+4, любая биговка. Отгрузка без сложения.",
+      "design": "клиента",
+      "designDevelopment": "40 BYN",
+      "tiers": [
+        { "label": "от 30 шт", "minQuantity": 30, "priceWithoutVat": 1.67, "priceWithVat": 2, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 1.6, "priceWithVat": 1.92, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 1.5, "priceWithVat": 1.8, "orderMultiple": 1 }
+      ]
     },
     "pechat_firmennyh_blankov": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Фирм. бланки. Не является реальным прайсом."
+      "name": "Бланк A4 фирменный",
+      "unit": "шт",
+      "description": "Бумага мелованная 115 г/м2 4+0.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN",
+      "tiers": [
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 0.45, "priceWithVat": 0.54, "orderMultiple": 1 },
+        { "label": "от 300 шт", "minQuantity": 300, "priceWithoutVat": 0.4, "priceWithVat": 0.48, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 0.36, "priceWithVat": 0.43, "orderMultiple": 1 }
+      ]
     },
-    "pechat_listovok": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Листовки. Не является реальным прайсом."
+    "business_cards": {
+      "name": "Визитки стандарт",
+      "unit": "комплект",
+      "description": "Бумага мелованная 350 г/м2 4+0, комплект 96 шт.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN",
+      "tiers": [
+        { "label": "от 1 комплекта", "minQuantity": 1, "priceWithoutVat": 25, "priceWithVat": 30, "orderMultiple": 1 },
+        { "label": "от 3 комплектов", "minQuantity": 3, "priceWithoutVat": 20, "priceWithVat": 24, "orderMultiple": 1 },
+        { "label": "от 5 комплектов", "minQuantity": 5, "priceWithoutVat": 18, "priceWithVat": 21.6, "orderMultiple": 1 }
+      ]
     },
-    "pechat_menyu": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Меню. Не является реальным прайсом."
+    "listovka_a4_one_side": {
+      "name": "Листовка A4 односторонняя",
+      "unit": "шт",
+      "description": "Бумага мелованная 115 г/м2 4+0.",
+      "design": "клиента",
+      "designDevelopment": "20 BYN",
+      "tiers": [
+        { "label": "от 50 шт", "minQuantity": 50, "priceWithoutVat": 0.85, "priceWithVat": 1.02, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 0.8, "priceWithVat": 0.96, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 0.7, "priceWithVat": 0.84, "orderMultiple": 1 }
+      ]
     },
-    "pechat_na_magnitax1": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать на магнитах. Не является реальным прайсом."
+    "listovka_a4_two_side": {
+      "name": "Листовка A4 двусторонняя",
+      "unit": "шт",
+      "description": "Бумага мелованная 115 г/м2 4+4.",
+      "design": "клиента",
+      "designDevelopment": "40 BYN",
+      "tiers": [
+        { "label": "от 30 шт", "minQuantity": 30, "priceWithoutVat": 1.5, "priceWithVat": 1.8, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 1.4, "priceWithVat": 1.68, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 1.1, "priceWithVat": 1.32, "orderMultiple": 1 }
+      ]
     },
-    "pechat_na_tkani_i_sumkah": {
-      "value": 50,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать на ткани. Не является реальным прайсом."
+    "papki": {
+      "name": "Папка A4 с карманом",
+      "unit": "шт",
+      "description": "Верх 350 г/м2 4+0, ламинация матовая или глянцевая, с клапаном.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN",
+      "tiers": [
+        { "label": "от 10 шт", "minQuantity": 10, "priceWithoutVat": 6, "priceWithVat": 7.2, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 5.15, "priceWithVat": 6.18, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 4.9, "priceWithVat": 5.88, "orderMultiple": 1 }
+      ]
     },
-    "pechat_na_xolste": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать на холсте репродукций картин и фотографий. Не является реальным прайсом."
-    },
-    "pechat_shelftokerov": {
-      "value": 165,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать шелфтокеров. Не является реальным прайсом."
-    },
-    "perekidnye_nastennye_kalendari": {
-      "value": 70,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Настенные перекидные календари. Не является реальным прайсом."
-    },
-    "pilony": {
-      "value": 230,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Рекламные пилоны, стеллы и другие отдельностоящие рекламные конструкции. Не является реальным прайсом."
-    },
-    "plakaty_afishy": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Плакаты и афиши. Не является реальным прайсом."
-    },
-    "plotternaya_rezka": {
-      "value": 30,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Плоттерная резка. Не является реальным прайсом."
-    },
-    "podarochnyie_naboryi": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Подарочные наборы. Не является реальным прайсом."
-    },
-    "podstavki_iz_probki": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Подставки под кружку. Не является реальным прайсом."
-    },
-    "podstavki_pod_poligraficheskuyu_produkcziyu_iz_orgstekla": {
-      "value": 135,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Подставки под полиграфическую продукцию из оргстекла. Не является реальным прайсом."
-    },
-    "podstavki_tovary": {
-      "value": 125,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Подставки под товары из оргстекла. Не является реальным прайсом."
-    },
-    "polietilenovyie_paketyi": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Полиэтиленовые пакеты с логотипом. Не является реальным прайсом."
-    },
-    "pop_up_stendy": {
-      "value": 210,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Pop up стенды (Поп Ап Системы). Не является реальным прайсом."
-    },
-    "pos_materialy": {
-      "value": 115,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Pos материалы. Не является реальным прайсом."
-    },
-    "posteryi_i_plakatyi": {
-      "value": 135,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать постеров и плакатов большого формата. Не является реальным прайсом."
-    },
-    "price_list": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Прайс-листы. Не является реальным прайсом."
-    },
-    "priglasheniya_bilety": {
-      "value": 35,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Билеты. Не является реальным прайсом."
-    },
-    "promo_stojki": {
-      "value": 170,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление промо-стоек и промо-столов. Не является реальным прайсом."
-    },
-    "propusk": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Пропуска. Не является реальным прайсом."
-    },
-    "razdatochnue_materialu": {
-      "value": 45,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Раздаточные материалы. Не является реальным прайсом."
-    },
-    "reklamnye_bannery_rastyazhki": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Рекламные баннеры-растяжки. Не является реальным прайсом."
-    },
-    "reklamnye_stoppery": {
-      "value": 135,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление стопперов в Минске. Не является реальным прайсом."
-    },
-    "reklamnye_voblery": {
-      "value": 155,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Рекламные воблеры. Не является реальным прайсом."
-    },
-    "reklamnyie_ukazateli": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Информационные и рекламные указатели, навигация в торговом зале. Не является реальным прайсом."
-    },
-    "rollup": {
-      "value": 220,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Roll-up / мобильный стенд. Не является реальным прайсом."
-    },
-    "rostovye_figury_hardpostery_tantamareski": {
-      "value": 105,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Ростовые фигуры, хардпостеры, тантамарески. Не является реальным прайсом."
-    },
-    "ruchki_s_logotipom": {
-      "value": 65,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Ручки с логотипом. Не является реальным прайсом."
+    "bumazhnyie_paketyi": {
+      "name": "Пакет A4 бумажный",
+      "unit": "шт",
+      "description": "Бумага 150 г/м2 4+0, ламинация матовая или глянцевая, люверс, шнурок.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN",
+      "tiers": [
+        { "label": "от 1 шт", "minQuantity": 1, "priceWithoutVat": 10.5, "priceWithVat": 12.6, "orderMultiple": 1 },
+        { "label": "от 50 шт", "minQuantity": 50, "priceWithoutVat": 9, "priceWithVat": 10.8, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 7, "priceWithVat": 8.4, "orderMultiple": 1 }
+      ]
     },
     "sertifikaty_diplomy": {
-      "value": 35,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Сертификаты. Не является реальным прайсом."
+      "name": "Сертификат / диплом / благодарность A4",
+      "unit": "шт",
+      "description": "Бумага мелованная 350 г/м2 4+0.",
+      "design": "клиента",
+      "designDevelopment": "15 BYN",
+      "tiers": [
+        { "label": "от 20 шт", "minQuantity": 20, "priceWithoutVat": 2.5, "priceWithVat": 3, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 2.35, "priceWithVat": 2.82, "orderMultiple": 1 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 2.2, "priceWithVat": 2.64, "orderMultiple": 1 }
+      ]
     },
-    "setka": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Строительная сетка для ограждения. Не является реальным прайсом."
+    "stikerpak_a6": {
+      "name": "СтикерПак A6",
+      "unit": "шт",
+      "description": "Самоклеящаяся бумага, цифровая печать.",
+      "design": "клиента",
+      "designDevelopment": "20 BYN",
+      "tiers": [
+        { "label": "от 80 шт", "minQuantity": 80, "priceWithoutVat": 0.95, "priceWithVat": 1.14, "orderMultiple": 8 },
+        { "label": "от 300 шт", "minQuantity": 300, "priceWithoutVat": 0.8, "priceWithVat": 0.96, "orderMultiple": 8 },
+        { "label": "от 500 шт", "minQuantity": 500, "priceWithoutVat": 0.75, "priceWithVat": 0.9, "orderMultiple": 8 }
+      ]
     },
-    "shtender": {
-      "value": 220,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Изготовление штендеров. Не является реальным прайсом."
+    "stikerpak_a5": {
+      "name": "СтикерПак A5",
+      "unit": "шт",
+      "description": "Самоклеящаяся бумага, цифровая печать.",
+      "design": "клиента",
+      "designDevelopment": "25 BYN",
+      "tiers": [
+        { "label": "от 40 шт", "minQuantity": 40, "priceWithoutVat": 1.8, "priceWithVat": 2.16, "orderMultiple": 4 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 1.45, "priceWithVat": 1.74, "orderMultiple": 4 },
+        { "label": "от 300 шт", "minQuantity": 300, "priceWithoutVat": 1.35, "priceWithVat": 1.62, "orderMultiple": 4 }
+      ]
     },
-    "skinali": {
-      "value": 145,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Скинали для кухни. Не является реальным прайсом."
+    "rollup": {
+      "name": "Roll-up 800x2000",
+      "unit": "шт",
+      "description": "Roll-up и баннер с печатью.",
+      "design": "клиента",
+      "designDevelopment": "25 BYN",
+      "tiers": [
+        { "label": "от 1 шт", "minQuantity": 1, "priceWithoutVat": 200, "priceWithVat": 240, "orderMultiple": 1 },
+        { "label": "от 3 шт", "minQuantity": 3, "priceWithoutVat": 185, "priceWithVat": 222, "orderMultiple": 1 },
+        { "label": "от 5 шт", "minQuantity": 5, "priceWithoutVat": null, "priceWithVat": null, "orderMultiple": 1 }
+      ]
     },
-    "souvenir": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Сувенирная продукция с логотипом. Не является реальным прайсом."
+    "rostovaya_figura_karton": {
+      "name": "Ростовая фигура, картон",
+      "unit": "шт",
+      "design": "клиента",
+      "designDevelopment": "25 BYN",
+      "tiers": [
+        { "label": "от 1 шт", "minQuantity": 1, "priceWithoutVat": 90, "priceWithVat": 108 },
+        { "label": "от 3 шт", "minQuantity": 3, "priceWithoutVat": null, "priceWithVat": null },
+        { "label": "от 5 шт", "minQuantity": 5, "priceWithoutVat": null, "priceWithVat": null }
+      ]
     },
-    "stickers": {
-      "value": 40,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Наклейки / этикетки. Не является реальным прайсом."
+    "rostovaya_figura_plastik": {
+      "name": "Ростовая фигура, пластик",
+      "unit": "шт",
+      "design": "клиента",
+      "designDevelopment": "25 BYN",
+      "tiers": [
+        { "label": "от 1 шт", "minQuantity": 1, "priceWithoutVat": 125, "priceWithVat": 150 },
+        { "label": "от 3 шт", "minQuantity": 3, "priceWithoutVat": null, "priceWithVat": null },
+        { "label": "от 5 шт", "minQuantity": 5, "priceWithoutVat": null, "priceWithVat": null }
+      ]
     },
-    "suveniry_dlya_medrabotnikov": {
-      "value": 95,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Сувениры для медработников. Не является реальным прайсом."
+    "nastolnye_kalendari_domiki": {
+      "name": "Календарь-домик",
+      "unit": "шт",
+      "design": "клиента",
+      "designDevelopment": "20 BYN",
+      "tiers": [
+        { "label": "от 1 шт", "minQuantity": 1, "priceWithoutVat": null, "priceWithVat": null },
+        { "label": "от 10 шт", "minQuantity": 10, "priceWithoutVat": null, "priceWithVat": null },
+        { "label": "от 50 шт", "minQuantity": 50, "priceWithoutVat": null, "priceWithVat": null },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": null, "priceWithVat": null }
+      ]
     },
-    "svadebnaya_poligraphiya": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Свадебная полиграфия. Не является реальным прайсом."
-    },
-    "svetovye_koroba": {
-      "value": 200,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Световые короба (лайтбоксы). Не является реальным прайсом."
-    },
-    "tarelki": {
-      "value": 115,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Печать на тарелках. Не является реальным прайсом."
-    },
-    "trafarety": {
-      "value": 100,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Трафареты. Изготовление самоклеющихся трафаретов для стен.. Не является реальным прайсом."
-    },
-    "trafaretyi_dlya_okraski_sten": {
-      "value": 125,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Трафареты для декора. Не является реальным прайсом."
-    },
-    "uf_pechat_v_minske": {
-      "value": 55,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: УФ печать в Минске. Не является реальным прайсом."
-    },
-    "zazhigalki": {
-      "value": 75,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Зажигалки с логотипом. Не является реальным прайсом."
-    },
-    "zerkala_karmannye": {
-      "value": 85,
-      "unit": "за заказ",
-      "comment": "Тестовая цена для проверки бота: Зеркала карманные. Не является реальным прайсом."
+    "kvartalnye_kalendari": {
+      "name": "Календарь квартальный",
+      "unit": "шт",
+      "description": "Бумага 350 г/м2, ламинация матовая или глянцевая, сетка стандарт офсет, пружина, ригель.",
+      "design": "клиента",
+      "designDevelopment": "20 BYN",
+      "tiers": [
+        { "label": "от 1 шт", "minQuantity": 1, "priceWithoutVat": 15, "priceWithVat": 18, "orderMultiple": 1 },
+        { "label": "от 10 шт", "minQuantity": 10, "priceWithoutVat": 11, "priceWithVat": 13.2, "orderMultiple": 1 },
+        { "label": "от 50 шт", "minQuantity": 50, "priceWithoutVat": 9.5, "priceWithVat": 11.4, "orderMultiple": 1 },
+        { "label": "от 100 шт", "minQuantity": 100, "priceWithoutVat": 8.5, "priceWithVat": 10.2, "orderMultiple": 1 }
+      ]
     }
   }
 }
